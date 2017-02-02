@@ -1,5 +1,9 @@
-require "bundler/setup"
-require "rake_dependencies"
+require 'bundler/setup'
+
+require 'rake'
+require 'support/shared_contexts/rake'
+
+require 'rake_dependencies'
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
