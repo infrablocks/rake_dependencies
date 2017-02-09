@@ -5,6 +5,7 @@ module RakeDependencies
     class Clean < Mattock::Tasklib
       setting :name, :clean
       required_fields :path
+      required_fields :dependency
 
       def default_configuration(*args)
         super(args)
@@ -12,6 +13,7 @@ module RakeDependencies
       end
 
       def define
+        desc "Clean vendored #{dependency}"
         task name do
           rm_rf path
         end
