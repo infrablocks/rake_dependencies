@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    rake_dependencies (0.2.0)
+    rake-dependencies (0.2.0)
       hamster (~> 3.0)
       mattock (~> 0.10)
 
@@ -60,7 +60,7 @@ DEPENDENCIES
   fakefs (~> 0.10)
   gem-release (~> 0.7)
   rake (~> 10.0)
-  rake_dependencies!
+  rake-dependencies!
   rspec (~> 3.0)
 
 BUNDLED WITH
