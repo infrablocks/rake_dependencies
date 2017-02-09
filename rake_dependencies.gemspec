@@ -4,7 +4,7 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require 'rake_dependencies/version'
 
 Gem::Specification.new do |spec|
-  spec.name = 'rake_dependencies'
+  spec.name = 'rake-dependencies'
   spec.version = RakeDependencies::VERSION
   spec.authors = ['Toby Clemson']
   spec.email = ['tobyclemson@gmail.com']
