@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    rake-dependencies (0.2.0)
+    rake-dependencies (0.3.0)
       hamster (~> 3.0)
       mattock (~> 0.10)
 
