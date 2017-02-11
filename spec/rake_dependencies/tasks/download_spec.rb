@@ -16,8 +16,8 @@ describe RakeDependencies::Tasks::Download do
         t.dependency = 'super-cool-tool'
         t.version = '1.2.3'
         t.type = :tar_gz
-        t.uri_template = 'https://example.com/<%= @version %>/super-cool-tool-<%= @os %>-x86_64<%= @ext %>'
-        t.file_name_template = 'super-cool-tool-<%= @os %><%= @ext %>'
+        t.uri_template = 'https://example.com/<%= @version %>/super-cool-tool-<%= @os_id %>-x86_64<%= @ext %>'
+        t.file_name_template = 'super-cool-tool-<%= @os_id %><%= @ext %>'
         block.call(t) if block
       end
     end
@@ -44,6 +44,8 @@ describe RakeDependencies::Tasks::Download do
     allow_any_instance_of(subject).to(receive(:cp))
   end
 
+  # TODO: Check that it throws if required parameters are not supplied
+
   it 'adds a download task in the namespace in which it is created' do
     define_task
 
@@ -60,6 +62,36 @@ describe RakeDependencies::Tasks::Download do
     define_task(:fetch)
 
     expect(Rake::Task['dependency:fetch']).not_to be_nil
+  end
+
+  it 'allows multiple download tasks to be declared' do
+    namespace :dependency1 do
+      subject.new do |t|
+        t.path = 'vendor/dependency1'
+        t.dependency = 'super-cool-tool1'
+        t.version = '1.2.3'
+        t.type = :tar_gz
+        t.uri_template = 'https://example.com/<%= @version %>/super-cool-tool-<%= @os %>-x86_64<%= @ext %>'
+        t.file_name_template = 'super-cool-tool-<%= @os %><%= @ext %>'
+      end
+    end
+
+    namespace :dependency2 do
+      subject.new do |t|
+        t.path = 'vendor/dependency2'
+        t.dependency = 'super-cool-tool2'
+        t.version = '1.2.3'
+        t.type = :tar_gz
+        t.uri_template = 'https://example.com/<%= @version %>/super-cool-tool-<%= @os %>-x86_64<%= @ext %>'
+        t.file_name_template = 'super-cool-tool-<%= @os %><%= @ext %>'
+      end
+    end
+
+    dependency1_download = Rake::Task['dependency1:download']
+    dependency2_download = Rake::Task['dependency2:download']
+
+    expect(dependency1_download).not_to be_nil
+    expect(dependency2_download).not_to be_nil
   end
 
   it 'recursively makes the download path' do
@@ -103,14 +135,80 @@ describe RakeDependencies::Tasks::Download do
     Rake::Task['dependency:download'].invoke
   end
 
-  it 'uses an OS of linux for a non-darwin platform' do
-    define_task { |t| t.uri_template = '<%= @os %>'}
-    set_platform_to('something-weird')
+  it 'passes a platform of :mac for a darwin platform' do
+    define_task { |t| t.uri_template = '<%= @platform %>'}
+    set_platform_to('darwin')
+    stub_external_calls
+
+    expect_any_instance_of(subject)
+        .to(receive(:open)
+                .with('mac'))
+
+    Rake::Task['dependency:download'].invoke
+  end
+
+  it 'passes a platform of :linux for all other platforms' do
+    define_task { |t| t.uri_template = '<%= @platform %>'}
+    set_platform_to('unix')
     stub_external_calls
 
     expect_any_instance_of(subject)
         .to(receive(:open)
                 .with('linux'))
+
+    Rake::Task['dependency:download'].invoke
+  end
+
+  it 'passes an OS ID of "mac" for a :mac platform by default' do
+    define_task { |t| t.uri_template = '<%= @os_id %>' }
+    set_platform_to('darwin')
+    stub_external_calls
+
+    expect_any_instance_of(subject)
+        .to(receive(:open)
+                .with('mac'))
+
+    Rake::Task['dependency:download'].invoke
+  end
+
+  it 'passes an OS ID of "linux" for a :linux platform by default' do
+    define_task { |t| t.uri_template = '<%= @os_id %>' }
+    set_platform_to('linux')
+    stub_external_calls
+
+    expect_any_instance_of(subject)
+        .to(receive(:open)
+                .with('linux'))
+
+    Rake::Task['dependency:download'].invoke
+  end
+
+  it 'passes the provided OS ID for a :mac platform when present' do
+    define_task do |t|
+      t.os_ids = {mac: 'darwin', linux: 'linux64'}
+      t.uri_template = '<%= @os_id %>'
+    end
+    set_platform_to('darwin')
+    stub_external_calls
+
+    expect_any_instance_of(subject)
+        .to(receive(:open)
+                .with('darwin'))
+
+    Rake::Task['dependency:download'].invoke
+  end
+
+  it 'passes the provided OS ID for a :linux platform when present' do
+    define_task do |t|
+      t.os_ids = {mac: 'darwin', linux: 'linux64'}
+      t.uri_template = '<%= @os_id %>'
+    end
+    set_platform_to('linux')
+    stub_external_calls
+
+    expect_any_instance_of(subject)
+        .to(receive(:open)
+                .with('linux64'))
 
     Rake::Task['dependency:download'].invoke
   end
@@ -160,6 +258,21 @@ describe RakeDependencies::Tasks::Download do
     Rake::Task['dependency:download'].invoke
   end
 
+  it 'uses the provided platform specific extension when a map is passed as the type' do
+    define_task do |t|
+      t.type = {mac: :zip, linux: :tar_gz}
+      t.uri_template = '<%= @ext %>'
+    end
+    set_platform_to('linux')
+    stub_external_calls
+
+    expect_any_instance_of(subject)
+        .to(receive(:open)
+                .with('.tar.gz'))
+
+    Rake::Task['dependency:download'].invoke
+  end
+
   it 'raises an error when an unknown type is supplied' do
     define_task do |t|
       t.type = :wat
@@ -173,7 +286,7 @@ describe RakeDependencies::Tasks::Download do
     }.to raise_error(RuntimeError, 'Unknown type: wat')
   end
 
-  it 'allows the download directory to be overidden' do
+  it 'allows the download directory to be overridden' do
     define_task { |t| t.directory = 'spinach'}
     set_platform
     stub_external_calls

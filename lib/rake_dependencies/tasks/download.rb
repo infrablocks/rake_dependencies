@@ -9,10 +9,11 @@ module RakeDependencies
 
       parameter :name, default: :download
       parameter :type, default: :zip
+      parameter :os_ids, default: {mac: 'mac', linux: 'linux'}
       parameter :directory, default: 'dist'
+      parameter :version
       parameter :path, required: true
       parameter :dependency, required: true
-      parameter :version, required: true
       parameter :uri_template, required: true
       parameter :file_name_template, required: true
 
@@ -24,7 +25,12 @@ module RakeDependencies
       def define
         desc "Download #{dependency} distribution"
         task name do
-          parameters = {version: version, os: os, ext: ext}
+          parameters = {
+              version: version,
+              platform: platform,
+              os_id: os_id,
+              ext: ext
+          }
 
           uri = Template.new(uri_template)
             .with_parameters(parameters)
@@ -44,12 +50,17 @@ module RakeDependencies
 
       private
 
-      def os
+      def os_id
+        os_ids[platform]
+      end
+
+      def platform
         RUBY_PLATFORM =~ /darwin/ ? :mac : :linux
       end
 
       def ext
-        case type.to_sym
+        resolved_type = type.is_a?(Hash) ? type[platform].to_sym : type.to_sym
+        case resolved_type
           when :tar_gz then '.tar.gz'
           when :tgz then '.tgz'
           when :zip then '.zip'
