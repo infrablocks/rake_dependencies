@@ -37,6 +37,28 @@ describe RakeDependencies::Tasks::Clean do
     expect(Rake::Task['dependency:remove']).not_to be_nil
   end
 
+  it 'allows multiple clean tasks to be declared' do
+    namespace :dependency1 do
+      subject.new do |t|
+        t.path = 'some/path/for/1'
+        t.dependency = 'something1'
+      end
+    end
+
+    namespace :dependency2 do
+      subject.new do |t|
+        t.path = 'some/path/for/2'
+        t.dependency = 'something2'
+      end
+    end
+
+    dependency1_clean = Rake::Task['dependency1:clean']
+    dependency2_clean = Rake::Task['dependency2:clean']
+
+    expect(dependency1_clean).not_to be_nil
+    expect(dependency2_clean).not_to be_nil
+  end
+
   it 'recursively removes the dependency download path' do
     path = 'vendor/dependency'
 
@@ -55,6 +77,6 @@ describe RakeDependencies::Tasks::Clean do
       subject.new do |t|
         t.dependency = 'something'
       end
-    }.to raise_error(Calibrate::RequiredFieldUnset)
+    }.to raise_error(RakeDependencies::RequiredParameterUnset)
   end
 end

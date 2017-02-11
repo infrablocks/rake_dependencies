@@ -1,22 +1,22 @@
-require 'mattock'
 require 'open-uri'
+require_relative '../tasklib'
 require_relative '../template'
 
 module RakeDependencies
   module Tasks
-    class Download < Mattock::Tasklib
+    class Download < TaskLib
       extend FileUtils
 
-      setting :name, :download
-      setting :type, :zip
-      setting :directory, 'dist'
-      required_fields :path
-      required_fields :dependency
-      required_fields :version
-      required_fields :uri_template
-      required_fields :file_name_template
+      parameter :name, default: :download
+      parameter :type, default: :zip
+      parameter :directory, default: 'dist'
+      parameter :path, required: true
+      parameter :dependency, required: true
+      parameter :version, required: true
+      parameter :uri_template, required: true
+      parameter :file_name_template, required: true
 
-      def default_configuration(*args)
+      def process_arguments(args)
         super(args)
         self.name = args[0] if args[0]
       end

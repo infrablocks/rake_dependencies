@@ -1,14 +1,13 @@
-require 'mattock'
+require_relative '../tasklib'
 
 module RakeDependencies
   module Tasks
-    class Clean < Mattock::Tasklib
-      setting :name, :clean
-      required_fields :path
-      required_fields :dependency
+    class Clean < TaskLib
+      parameter :name, :default => :clean
+      parameter :path, :required => true
+      parameter :dependency, :required => true
 
-      def default_configuration(*args)
-        super(args)
+      def process_arguments(args)
         self.name = args[0] if args[0]
       end
 
