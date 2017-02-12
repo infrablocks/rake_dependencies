@@ -25,7 +25,7 @@ describe RakeDependencies::Tasks::Extract do
   end
 
   context 'task definition' do
-    it 'adds an extract class in the namespace in which it is created' do
+    it 'adds an extract task in the namespace in which it is created' do
       define_task
 
       expect(Rake::Task['dependency:extract']).not_to be_nil

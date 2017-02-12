@@ -5,15 +5,16 @@ require_relative '../template'
 module RakeDependencies
   module Tasks
     class Download < TaskLib
-      extend FileUtils
-
       parameter :name, default: :download
+
       parameter :type, default: :zip
       parameter :os_ids, default: {mac: 'mac', linux: 'linux'}
+
       parameter :distribution_directory, default: 'dist'
+
+      parameter :dependency, required: true
       parameter :version
       parameter :path, required: true
-      parameter :dependency, required: true
       parameter :uri_template, required: true
       parameter :file_name_template, required: true
 
