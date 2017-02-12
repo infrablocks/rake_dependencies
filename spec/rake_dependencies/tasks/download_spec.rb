@@ -1,11 +1,5 @@
 require 'spec_helper'
 
-def stub_external_calls
-  stub_open_uri
-  stub_make_directory
-  stub_copy
-end
-
 describe RakeDependencies::Tasks::Download do
   include_context :rake
 
@@ -29,6 +23,12 @@ describe RakeDependencies::Tasks::Download do
 
   def set_platform
     set_platform_to('darwin')
+  end
+
+  def stub_external_calls
+    stub_open_uri
+    stub_make_directory
+    stub_copy
   end
 
   def stub_open_uri
@@ -286,8 +286,8 @@ describe RakeDependencies::Tasks::Download do
     }.to raise_error(RuntimeError, 'Unknown type: wat')
   end
 
-  it 'allows the download directory to be overridden' do
-    define_task { |t| t.directory = 'spinach'}
+  it 'allows the distribution directory to be overridden' do
+    define_task { |t| t.distribution_directory = 'spinach'}
     set_platform
     stub_external_calls
 

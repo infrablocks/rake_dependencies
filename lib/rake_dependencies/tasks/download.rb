@@ -10,7 +10,7 @@ module RakeDependencies
       parameter :name, default: :download
       parameter :type, default: :zip
       parameter :os_ids, default: {mac: 'mac', linux: 'linux'}
-      parameter :directory, default: 'dist'
+      parameter :distribution_directory, default: 'dist'
       parameter :version
       parameter :path, required: true
       parameter :dependency, required: true
@@ -38,7 +38,7 @@ module RakeDependencies
           download_file_name = Template.new(file_name_template)
             .with_parameters(parameters)
             .render
-          download_file_directory = File.join(path, directory)
+          download_file_directory = File.join(path, distribution_directory)
           download_file_path = File.join(download_file_directory, download_file_name)
 
           temporary_file = open(uri)
