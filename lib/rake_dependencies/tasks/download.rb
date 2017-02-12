@@ -58,8 +58,11 @@ module RakeDependencies
         RUBY_PLATFORM =~ /darwin/ ? :mac : :linux
       end
 
+      def resolved_type
+        type.is_a?(Hash) ? type[platform].to_sym : type.to_sym
+      end
+
       def ext
-        resolved_type = type.is_a?(Hash) ? type[platform].to_sym : type.to_sym
         case resolved_type
           when :tar_gz then '.tar.gz'
           when :tgz then '.tgz'
