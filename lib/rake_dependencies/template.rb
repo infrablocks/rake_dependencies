@@ -1,4 +1,5 @@
 require 'hamster'
+require 'erb'
 
 module RakeDependencies
   class Template
