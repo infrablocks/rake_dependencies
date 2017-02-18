@@ -53,6 +53,12 @@ describe RakeDependencies::Tasks::Fetch do
   end
 
   context 'parameters' do
+    it 'allows the task name to be overridden' do
+      define_task(:get)
+
+      expect(Rake::Task['dependency:get']).not_to be_nil
+    end
+
     it 'allows the download task to be overridden' do
       define_task(nil, additional_tasks: [:dl, :extract]) do |t|
         t.download_task = :dl
