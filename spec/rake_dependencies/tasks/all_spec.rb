@@ -289,7 +289,8 @@ describe RakeDependencies::Tasks::All do
       extract_configurer = double_allowing(
           :dependency=, :version=, :path=, :type=, :name=,
           :file_name_template=, :os_ids=,
-          :distribution_directory=, :binary_directory=)
+          :distribution_directory=, :binary_directory=,
+          :strip_path_template=)
 
       namespace :some_namespace do
         task :extract
@@ -315,7 +316,8 @@ describe RakeDependencies::Tasks::All do
       extract_configurer = double_allowing(
           :dependency=, :version=, :path=, :type=, :name=,
           :file_name_template=, :os_ids=,
-          :distribution_directory=, :binary_directory=)
+          :distribution_directory=, :binary_directory=,
+          :strip_path_template=)
 
       namespace :some_namespace do
         task :extract
@@ -333,7 +335,8 @@ describe RakeDependencies::Tasks::All do
       extract_configurer = double_allowing(
           :dependency=, :version=, :path=, :type=, :name=,
           :file_name_template=, :os_ids=,
-          :distribution_directory=, :binary_directory=)
+          :distribution_directory=, :binary_directory=,
+          :strip_path_template=)
 
       namespace :some_namespace do
         task :extract
@@ -353,7 +356,8 @@ describe RakeDependencies::Tasks::All do
       extract_configurer = double_allowing(
           :dependency=, :version=, :path=, :type=, :name=,
           :file_name_template=, :os_ids=,
-          :distribution_directory=, :binary_directory=)
+          :distribution_directory=, :binary_directory=,
+          :strip_path_template=)
 
       namespace :some_namespace do
         task :extract
@@ -371,7 +375,8 @@ describe RakeDependencies::Tasks::All do
       extract_configurer = double_allowing(
           :dependency=, :version=, :path=, :type=, :name=,
           :file_name_template=, :os_ids=,
-          :distribution_directory=, :binary_directory=)
+          :distribution_directory=, :binary_directory=,
+          :strip_path_template=)
 
       namespace :some_namespace do
         task :extract
@@ -391,7 +396,8 @@ describe RakeDependencies::Tasks::All do
       extract_configurer = double_allowing(
           :dependency=, :version=, :path=, :type=, :name=,
           :file_name_template=, :os_ids=,
-          :distribution_directory=, :binary_directory=)
+          :distribution_directory=, :binary_directory=,
+          :strip_path_template=)
 
       namespace :some_namespace do
         task :extract
@@ -409,7 +415,8 @@ describe RakeDependencies::Tasks::All do
       extract_configurer = double_allowing(
           :dependency=, :version=, :path=, :type=, :name=,
           :file_name_template=, :os_ids=,
-          :distribution_directory=, :binary_directory=)
+          :distribution_directory=, :binary_directory=,
+          :strip_path_template=)
 
       namespace :some_namespace do
         task :extract
@@ -425,11 +432,52 @@ describe RakeDependencies::Tasks::All do
       end
     end
 
+    it 'passes a nil strip path template when none supplied' do
+      extract_configurer = double_allowing(
+          :dependency=, :version=, :path=, :type=, :name=,
+          :file_name_template=, :os_ids=,
+          :distribution_directory=, :binary_directory=,
+          :strip_path_template=)
+
+      namespace :some_namespace do
+        task :extract
+      end
+
+      expect(RakeDependencies::Tasks::Extract)
+          .to(receive(:new).and_yield(extract_configurer))
+      expect(extract_configurer)
+          .to(receive(:strip_path_template=).with(nil))
+
+      define_tasks
+    end
+
+    it 'passes the provided binary_directory when supplied' do
+      extract_configurer = double_allowing(
+          :dependency=, :version=, :path=, :type=, :name=,
+          :file_name_template=, :os_ids=,
+          :distribution_directory=, :binary_directory=,
+          :strip_path_template=)
+
+      namespace :some_namespace do
+        task :extract
+      end
+
+      expect(RakeDependencies::Tasks::Extract)
+          .to(receive(:new).and_yield(extract_configurer))
+      expect(extract_configurer)
+          .to(receive(:strip_path_template=).with('<%= @version %>'))
+
+      define_tasks do |t|
+        t.strip_path_template = '<%= @version %>'
+      end
+    end
+
     it 'uses a type of zip by default' do
       extract_configurer = double_allowing(
           :dependency=, :version=, :path=, :type=, :name=,
           :file_name_template=, :os_ids=,
-          :distribution_directory=, :binary_directory=)
+          :distribution_directory=, :binary_directory=,
+          :strip_path_template=)
 
       namespace :some_namespace do
         task :extract
@@ -446,7 +494,8 @@ describe RakeDependencies::Tasks::All do
       extract_configurer = double_allowing(
           :dependency=, :version=, :path=, :type=, :name=,
           :file_name_template=, :os_ids=,
-          :distribution_directory=, :binary_directory=)
+          :distribution_directory=, :binary_directory=,
+          :strip_path_template=)
 
       namespace :some_namespace do
         task :extract
@@ -465,7 +514,8 @@ describe RakeDependencies::Tasks::All do
       extract_configurer = double_allowing(
           :dependency=, :version=, :path=, :type=, :name=,
           :file_name_template=, :os_ids=,
-          :distribution_directory=, :binary_directory=)
+          :distribution_directory=, :binary_directory=,
+          :strip_path_template=)
 
       namespace :some_namespace do
         task :extract
@@ -482,7 +532,8 @@ describe RakeDependencies::Tasks::All do
       extract_configurer = double_allowing(
           :dependency=, :version=, :path=, :type=, :name=,
           :file_name_template=, :os_ids=,
-          :distribution_directory=, :binary_directory=)
+          :distribution_directory=, :binary_directory=,
+          :strip_path_template=)
 
       namespace :some_namespace do
         task :unarchive

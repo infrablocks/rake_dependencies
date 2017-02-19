@@ -22,6 +22,7 @@ module RakeDependencies
 
       parameter :uri_template, :required => true
       parameter :file_name_template, :required => true
+      parameter :strip_path_template
 
       parameter :needs_fetch, :required => true
 
@@ -70,6 +71,7 @@ module RakeDependencies
             t.binary_directory = binary_directory
 
             t.file_name_template = file_name_template
+            t.strip_path_template = strip_path_template
           end
           Fetch.new do |t|
             t.name = fetch_task_name
