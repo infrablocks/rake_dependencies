@@ -10,6 +10,11 @@ describe RakeDependencies::Extractors do
 
   ZipExtractor = RakeDependencies::Extractors::ZipExtractor
   TarGzExtractor = RakeDependencies::Extractors::TarGzExtractor
+  UncompressedExtractor = RakeDependencies::Extractors::UncompressedExtractor
+
+  def stub_make_directory
+    allow(FileUtils).to(receive(:mkdir_p))
+  end
 
   context RakeDependencies::Extractors::ZipExtractor do
     def stub_zip_file_open
@@ -34,10 +39,6 @@ describe RakeDependencies::Extractors do
       allow(Zip::File).to(receive(:open).and_yield(zip_file_entries))
 
       zip_file_entries
-    end
-
-    def stub_make_directory
-      allow(FileUtils).to(receive(:mkdir_p))
     end
 
     it 'recursively makes the extract path' do
@@ -210,10 +211,6 @@ describe RakeDependencies::Extractors do
       tar_file_entries
     end
 
-    def stub_make_directory
-      allow(FileUtils).to(receive(:mkdir_p))
-    end
-
     def stub_file_open
       allow(File).to(receive(:open))
     end
@@ -371,36 +368,82 @@ describe RakeDependencies::Extractors do
       expect(File.open('some/path/for/extraction/file3') { |f| f.read }).to eq('File3')
     end
   end
+
+  context RakeDependencies::Extractors::UncompressedExtractor do
+    def stub_copy_file
+      allow(FileUtils).to(receive(:cp))
+    end
+
+    def stub_chmod_file
+      allow(FileUtils).to(receive(:chmod))
+    end
+
+    it 'recursively makes the target path' do
+      uncompressed_file_path = 'some/path/to/the-file'
+      extract_path = 'some/path/for/extraction'
+
+      stub_make_directory
+      stub_copy_file
+      stub_chmod_file
+
+      extractor = UncompressedExtractor.new(uncompressed_file_path, extract_path)
+
+      expect(FileUtils)
+          .to(receive(:mkdir_p).with('some/path/for/extraction'))
+
+      extractor.extract
+    end
+
+    it 'copies the binary to the target path' do
+      uncompressed_file_path = 'some/path/to/the-file'
+      extract_path = 'some/path/for/extraction'
+
+      stub_make_directory
+      stub_copy_file
+      stub_chmod_file
+
+      extractor = UncompressedExtractor.new(uncompressed_file_path, extract_path)
+
+      expect(FileUtils)
+          .to(receive(:cp)
+                  .with(uncompressed_file_path, 'some/path/for/extraction/the-file'))
+
+      extractor.extract
+    end
+
+    it 'renames the binary when the rename_to option is provided' do
+      uncompressed_file_path = 'some/path/to/the-file'
+      extract_path = 'some/path/for/extraction'
+      options = {rename_to: 'other-file'}
+
+      stub_make_directory
+      stub_copy_file
+      stub_chmod_file
+
+      extractor = UncompressedExtractor.new(uncompressed_file_path, extract_path, options)
+
+      expect(FileUtils)
+          .to(receive(:cp)
+                  .with(uncompressed_file_path, 'some/path/for/extraction/other-file'))
+
+      extractor.extract
+    end
+
+    it 'makes the target file executable' do
+      uncompressed_file_path = 'some/path/to/the-file'
+      extract_path = 'some/path/for/extraction'
+
+      stub_make_directory
+      stub_copy_file
+      stub_chmod_file
+
+      extractor = UncompressedExtractor.new(uncompressed_file_path, extract_path)
+
+      expect(FileUtils)
+          .to(receive(:chmod)
+                  .with(0755, 'some/path/for/extraction/the-file'))
+
+      extractor.extract
+    end
+  end
 end
-
-# Zlib::GzipReader.open(file_path) do |gzip_reader|
-#   Archive::Tar::Minitar.open(gzip_reader) do |tar_reader|
-#     tar_reader.each do |entry|
-#       tar_file_pathname = Pathname.new(entry.name)
-#       strip_pathname = Pathname.new("dist/k6-v#{version}-#{OS}")
-#       file_pathname = tar_file_pathname.relative_path_from(strip_pathname)
-#
-#       file_path = File.join(extract_path, file_pathname)
-#       FileUtils.mkdir_p(File.dirname(file_path))
-#       if entry.file? && !File.exists?(file_path)
-#         File.open(file_path, 'w', entry.mode) { |f| f.write(entry.read) }
-#       end
-#     end
-#   end
-# end
-
-# Zlib::GzipReader.open(file_path) do |gzip_reader|
-#   Archive::Tar::Minitar.open(gzip_reader) do |tar_reader|
-#     tar_reader.each do |entry|
-#       tar_file_pathname = Pathname.new(entry.name)
-#       strip_pathname = Pathname.new("google-cloud-sdk")
-#       file_pathname = tar_file_pathname.relative_path_from(strip_pathname)
-#
-#       file_path = File.join(extract_path, file_pathname)
-#       FileUtils.mkdir_p(File.dirname(file_path))
-#       if entry.file? && !File.exists?(file_path)
-#         File.open(file_path, 'w', entry.mode) { |f| f.write(entry.read) }
-#       end
-#     end
-#   end
-# end

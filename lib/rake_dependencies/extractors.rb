@@ -53,5 +53,23 @@ module RakeDependencies
         end
       end
     end
+
+    class UncompressedExtractor
+      def initialize(file_path, extract_path, options = {})
+        @file_path = file_path
+        @extract_path = extract_path
+        @options = options
+      end
+
+      def extract
+        target_name = @options[:rename_to] || File.basename(@file_path)
+        source = @file_path
+        destination = File.join(@extract_path, target_name)
+
+        FileUtils.mkdir_p(@extract_path)
+        FileUtils.cp(source, destination)
+        FileUtils.chmod(0755, destination)
+      end
+    end
   end
 end

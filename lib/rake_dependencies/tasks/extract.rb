@@ -16,7 +16,8 @@ module RakeDependencies
       parameter :extractors, default: {
           zip: Extractors::ZipExtractor,
           tar_gz: Extractors::TarGzExtractor,
-          tgz: Extractors::TarGzExtractor
+          tgz: Extractors::TarGzExtractor,
+          uncompressed: Extractors::UncompressedExtractor
       }
 
       parameter :distribution_directory, default: 'dist'
@@ -26,6 +27,7 @@ module RakeDependencies
       parameter :version
       parameter :path, required: true
       parameter :file_name_template, required: true
+      parameter :target_name_template
       parameter :strip_path_template
 
       def process_arguments args
@@ -55,8 +57,14 @@ module RakeDependencies
           options = {}
           if strip_path_template
             options[:strip_path] = Template.new(strip_path_template)
-               .with_parameters(parameters)
-               .render
+                .with_parameters(parameters)
+                .render
+          end
+
+          if target_name_template
+            options[:rename_to] = Template.new(target_name_template)
+                .with_parameters(parameters)
+                .render
           end
 
           extractor = extractor_for_extension.new(

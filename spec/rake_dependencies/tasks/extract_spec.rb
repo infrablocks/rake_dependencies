@@ -368,6 +368,51 @@ describe RakeDependencies::Tasks::Extract do
     end
   end
 
+  context 'uncompressed distributions' do
+    it 'copies the uncompressed distribution to the binary directory with the supplied name' do
+      define_task do |t|
+        t.type = :uncompressed
+      end
+      set_platform_to('linux')
+
+      extractor = double('tgz extractor')
+
+      expect(RakeDependencies::Extractors::UncompressedExtractor)
+          .to(receive(:new)
+                  .with(
+                      'vendor/dependency/dist/some-dep-linux',
+                      'vendor/dependency/bin',
+                      anything)
+                  .and_return(extractor))
+      expect(extractor)
+          .to(receive(:extract))
+
+      Rake::Task['dependency:extract'].invoke
+    end
+
+    it 'passes the target name when present' do
+      define_task do |t|
+        t.type = :uncompressed
+        t.target_name_template = 'binary.<%= @os_id %>'
+      end
+      set_platform_to('linux')
+
+      extractor = double('tgz extractor')
+
+      expect(RakeDependencies::Extractors::UncompressedExtractor)
+          .to(receive(:new)
+                  .with(
+                      anything,
+                      anything,
+                      {rename_to: 'binary.linux'})
+                  .and_return(extractor))
+      expect(extractor)
+          .to(receive(:extract))
+
+      Rake::Task['dependency:extract'].invoke
+    end
+  end
+
   context 'extraction options' do
     it 'passes a strip path created using the supplied template when present' do
       define_task do |t|
@@ -387,6 +432,5 @@ describe RakeDependencies::Tasks::Extract do
     end
   end
 
-  # uncompressed?
   # throws if required parameters are not supplied
 end
