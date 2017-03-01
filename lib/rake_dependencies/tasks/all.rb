@@ -22,6 +22,7 @@ module RakeDependencies
 
       parameter :uri_template, :required => true
       parameter :file_name_template, :required => true
+      parameter :target_name_template
       parameter :strip_path_template
 
       parameter :needs_fetch, :required => true
@@ -72,6 +73,7 @@ module RakeDependencies
 
             t.file_name_template = file_name_template
             t.strip_path_template = strip_path_template
+            t.target_name_template = target_name_template
           end
           Fetch.new do |t|
             t.name = fetch_task_name
