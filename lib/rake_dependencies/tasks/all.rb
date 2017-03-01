@@ -11,7 +11,7 @@ module RakeDependencies
       parameter :containing_namespace
 
       parameter :dependency, :required => true
-      parameter :version, :required => true
+      parameter :version
       parameter :path, :required => true
       parameter :type, :default => :zip
 
