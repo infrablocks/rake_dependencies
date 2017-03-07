@@ -1,5 +1,6 @@
 require 'zip'
 require 'zlib'
+require 'pathname'
 require 'archive/tar/minitar'
 
 module RakeDependencies
