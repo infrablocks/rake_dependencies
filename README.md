@@ -68,9 +68,9 @@ The tasks perform the following:
 * `<ns>:extract` - extracts, in the case of a compressed archive, or copies, in
   the case of an uncompressed distribution, the binaries into the binary 
   directory under the dependency directory
-* `<ns>:fetch` - cleans, downloads then extracts
-* `<ns>:ensure` - checks whether the dependency needs to be fetched and fetches
-  if necessary
+* `<ns>:fetch` - downloads then extracts
+* `<ns>:ensure` - checks whether the dependency needs to be fetched and cleans
+  and fetches if necessary
 
 With these tasks defined, any task that requires the dependency to be present 
 should depend on `<ns>:ensure`. Continuing the terraform example:
@@ -98,7 +98,7 @@ parameters:
 | `file_name_template`          | A template for the name of the downloaded file                                                                        | -                                | yes      |
 | `target_name_template`        | A template for the name of the binary after extraction/copying                                                        | -                                | no       |
 | `strip_path_template`         | A template for the path to strip within an archive before extracting                                                  | -                                | no       |
-| `needs_fetch`                 | A lambda taking a parameter map that should return `true` if the dependency needs to be fetched, `false` otherwise    | -                                | yes      |
+| `needs_fetch`                 | A lambda taking a parameter map that should return `true` if the dependency needs to be fetched, `false` otherwise    | Will always return `true`        | no       |
 | `clean_task_name`             | The name of the clean task, required if it should be different from the default                                       | `:clean`                         | yes      |
 | `download_task_name`          | The name of the download task, required if it should be different from the default                                    | `:download`                      | yes      |
 | `extract_task_name`           | The name of the extract task, required if it should be different from the default                                     | `:extract`                       | yes      |
@@ -119,6 +119,112 @@ Notes:
   * `path`: the supplied path
   * `version`: the supplied version string
   * `binary_directory`: the supplied or default binary directory
+  
+The `RakeDependencies::Tasks::All` tasklib uses each of the following tasklibs
+in its definition:
+* `RakeDependencies::Tasks::Clean`
+* `RakeDependencies::Tasks::Download`
+* `RakeDependencies::Tasks::Extract`
+* `RakeDependencies::Tasks::Fetch`
+* `RakeDependencies::Tasks::Ensure`
+
+### `RakeDependencies::Tasks::Clean`
+
+The `RakeDependencies::Tasks::Clean` tasklib supports the following 
+configuration parameters:
+
+| Name         | Description                                                               | Default                          | Required |
+|--------------|---------------------------------------------------------------------------|----------------------------------|:--------:|
+| `name`       | The name of the task, required if it should be different from the default | `:clean`                         | yes      |
+| `path`       | The path in which the dependency is installed                             | -                                | yes      |
+| `dependency` | The name of the dependency, used in status reporting                      | -                                | yes      |
+
+### `RakeDependencies::Tasks::Download`
+
+The `RakeDependencies::Tasks::Download` tasklib supports the following 
+configuration parameters:
+
+| Name                     | Description                                                                                          | Default                          | Required |
+|--------------------------|------------------------------------------------------------------------------------------------------|----------------------------------|:--------:|
+| `name`                   | The name of the task, required if it should be different from the default                            | `:download`                      | yes      |
+| `dependency`             | The name of the dependency, used in status reporting                                                 | -                                | yes      |
+| `version`                | The version of the dependency to manage, only required if used in templates                          | -                                | no       |
+| `path`                   | The path in which to install the dependency                                                          | -                                | yes      |
+| `type`                   | The archive type of the distribution, one of `:zip`, `:tar_gz`, `:tgz` or `:uncompressed`            | `:zip`                           | yes      |
+| `os_ids`                 | A map of platforms to OS identifiers to use in templates, containing entries for `:mac` and `:linux` | `{:mac: 'mac', :linux: 'linux'}` | yes      |
+| `distribution_directory` | The name of the directory under the supplied path into which to download the distribution            | `'dist'`                         | yes      |
+| `uri_template`           | A template for the URI of the distribution                                                           | -                                | yes      |
+| `file_name_template`     | A template for the name of the downloaded file                                                       | -                                | yes      |
+
+Notes:
+* The templates have the same instance variables in scope when rendered as 
+  mentioned above.
+
+### `RakeDependencies::Tasks::Extract`
+
+The `RakeDependencies::Tasks::Extract` tasklib supports the following 
+configuration parameters:
+
+| Name                     | Description                                                                                          | Default                            | Required |
+|--------------------------|------------------------------------------------------------------------------------------------------|------------------------------------|:--------:|
+| `name`                   | The name of the task, required if it should be different from the default                            | `:extract`                         | yes      |
+| `dependency`             | The name of the dependency, used in status reporting                                                 | -                                  | yes      |
+| `version`                | The version of the dependency to manage, only required if used in templates                          | -                                  | no       |
+| `path`                   | The path in which to install the dependency                                                          | -                                  | yes      |
+| `type`                   | The archive type of the distribution, one of `:zip`, `:tar_gz`, `:tgz` or `:uncompressed`            | `:zip`                             | yes      |
+| `os_ids`                 | A map of platforms to OS identifiers to use in templates, containing entries for `:mac` and `:linux` | `{:mac: 'mac', :linux: 'linux'}`   | yes      |
+| `extractors`             | A map of archive types to extractor classes, see notes for further details                           | Extractors for all supported types | yes      |
+| `distribution_directory` | The name of the directory under the supplied path into which the distribution was downloaded         | `'dist'`                           | yes      |
+| `binary_directory`       | The name of the directory under the supplied path into which to extract/copy the binaries            | `'bin'`                            | yes      |
+| `file_name_template`     | A template for the name of the downloaded file                                                       | -                                  | yes      |
+| `target_name_template`   | A template for the name to give the binary after extraction/copying                                  | -                                  | no       |
+| `strip_path_template`    | A template for the path to strip within an archive before extracting                                 | -                                  | no       |
+
+Notes:
+* The templates have the same instance variables in scope when rendered as 
+  mentioned above.
+* The extractors map has entries for the following keys:
+  * `:zip`: An extractor class for zip files
+  * `:tar_gz`: An extractor class for tar.gz files
+  * `:tgz`: An alias for `:tar_gz` using the same extractor class
+  * `:uncompressed`: An extractor class that copies the source to the 
+    destination
+* The extractor map can be overridden but should include entries for all of the
+  above.
+
+### `RakeDependencies::Tasks::Fetch`
+
+The `RakeDependencies::Tasks::Fetch` tasklib supports the following 
+configuration parameters:
+
+| Name                | Description                                                               | Default                        | Required |
+|---------------------|---------------------------------------------------------------------------|--------------------------------|:--------:|
+| `name`              | The name of the task, required if it should be different from the default | `:fetch`                       | yes      |
+| `dependency`        | The name of the dependency, used in status reporting                      | -                              | yes      |
+| `download_task`     | The full name including namespaces of the download task                   | `<current-namespace>:download` | yes      |
+| `extract_task`      | The full name including namespaces of the extract task                    | `<current-namespace>:extract`  | yes      |
+
+### `RakeDependencies::Tasks::Ensure`
+
+The `RakeDependencies::Tasks::Fetch` tasklib supports the following 
+configuration parameters:
+
+| Name               | Description                                                                                                           | Default                        | Required |
+|--------------------|-----------------------------------------------------------------------------------------------------------------------|--------------------------------|:--------:|
+| `name`             | The name of the task, required if it should be different from the default                                             | `:fetch`                       | yes      |
+| `dependency`       | The name of the dependency, used in status reporting                                                                  | -                              | yes      |
+| `version`          | The version of the dependency to manage, only required if used in templates                                           | -                              | no       |
+| `path`             | The path in which to install the dependency                                                                           | -                              | yes      |
+| `binary_directory` | The name of the directory under the supplied path into which to extract/copy the binaries                             | `'bin'`                        | yes      |
+| `needs_fetch`      | A lambda taking a parameter map that should return `true` if the dependency needs to be fetched, `false` otherwise    | Will always return `true`      | no       |
+| `clean_task`       | The full name including namespaces of the clean task                                                                  | `<current-namespace>:clean`    | yes      |
+| `download_task`    | The full name including namespaces of the download task                                                               | `<current-namespace>:download` | yes      |
+| `extract_task`     | The full name including namespaces of the extract task                                                                | `<current-namespace>:extract`  | yes      |
+
+Notes:
+* The templates have the same instance variables in scope when rendered as 
+  mentioned above.
+* The needs_fetch method receives the same parameter map as mentioned above.
   
 ## Development
 
