@@ -42,6 +42,18 @@ describe RakeDependencies::Tasks::All do
     expect(Rake::Task['important_dependency:ensure']).not_to be_nil
   end
 
+  it 'adds all tasks in the root namespace when none supplied' do
+    define_tasks do |t|
+      t.namespace = nil
+    end
+
+    expect(Rake::Task['clean']).not_to be_nil
+    expect(Rake::Task['download']).not_to be_nil
+    expect(Rake::Task['extract']).not_to be_nil
+    expect(Rake::Task['fetch']).not_to be_nil
+    expect(Rake::Task['ensure']).not_to be_nil
+  end
+
   context 'clean task' do
     it 'configures with the provided dependency and path' do
       dependency = 'some-dependency'

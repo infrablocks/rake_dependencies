@@ -36,68 +36,78 @@ module RakeDependencies
       alias namespace= containing_namespace=
 
       def define
-        namespace containing_namespace do
-          Clean.new do |t|
-            t.name = clean_task_name
-
-            t.dependency = dependency
-            t.path = path
+        if containing_namespace
+          namespace containing_namespace do
+            define_tasks
           end
-          Download.new do |t|
-            t.name = download_task_name
+        else
+          define_tasks
+        end
+      end
 
-            t.dependency = dependency
-            t.version = version
-            t.path = path
-            t.type = type
+      private
 
-            t.os_ids = os_ids
+      def define_tasks
+        Clean.new do |t|
+          t.name = clean_task_name
 
-            t.distribution_directory = distribution_directory
+          t.dependency = dependency
+          t.path = path
+        end
+        Download.new do |t|
+          t.name = download_task_name
 
-            t.uri_template = uri_template
-            t.file_name_template = file_name_template
-          end
-          Extract.new do |t|
-            t.name = extract_task_name
+          t.dependency = dependency
+          t.version = version
+          t.path = path
+          t.type = type
 
-            t.dependency = dependency
-            t.version = version
-            t.path = path
-            t.type = type
+          t.os_ids = os_ids
 
-            t.os_ids = os_ids
+          t.distribution_directory = distribution_directory
 
-            t.distribution_directory = distribution_directory
-            t.binary_directory = binary_directory
+          t.uri_template = uri_template
+          t.file_name_template = file_name_template
+        end
+        Extract.new do |t|
+          t.name = extract_task_name
 
-            t.file_name_template = file_name_template
-            t.strip_path_template = strip_path_template
-            t.target_name_template = target_name_template
-          end
-          Fetch.new do |t|
-            t.name = fetch_task_name
+          t.dependency = dependency
+          t.version = version
+          t.path = path
+          t.type = type
 
-            t.dependency = dependency
+          t.os_ids = os_ids
 
-            t.download_task = download_task_name
-            t.extract_task = extract_task_name
-          end
-          Ensure.new do |t|
-            t.name = ensure_task_name
+          t.distribution_directory = distribution_directory
+          t.binary_directory = binary_directory
 
-            t.dependency = dependency
-            t.version = version
-            t.path = path
+          t.file_name_template = file_name_template
+          t.strip_path_template = strip_path_template
+          t.target_name_template = target_name_template
+        end
+        Fetch.new do |t|
+          t.name = fetch_task_name
 
-            t.binary_directory = binary_directory
+          t.dependency = dependency
 
-            t.needs_fetch = needs_fetch
+          t.download_task = download_task_name
+          t.extract_task = extract_task_name
+        end
+        Ensure.new do |t|
+          t.name = ensure_task_name
 
-            t.clean_task = clean_task_name
-            t.download_task = download_task_name
-            t.extract_task = extract_task_name
-          end
+          t.dependency = dependency
+          t.version = version
+          t.path = path
+
+          t.binary_directory = binary_directory
+
+          t.needs_fetch = needs_fetch
+
+          t.clean_task = clean_task_name
+          t.download_task = download_task_name
+          t.extract_task = extract_task_name
         end
       end
     end
