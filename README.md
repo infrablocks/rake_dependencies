@@ -72,11 +72,20 @@ The tasks perform the following:
 * `<ns>:ensure` - checks whether the dependency needs to be fetched and fetches
   if necessary
 
+With these tasks defined, any task that requires the dependency to be present 
+should depend on `<ns>:ensure`. Continuing the terraform example:
+ 
+```ruby
+task :provision_database => ['terraform:ensure'] do
+  sh('vendor/terraform/bin/terraform apply infra/database')
+end
+```
+
 The `RakeDependencies::Tasks::All` tasklib supports the following configuration
 parameters:
 
 | Name                          | Description                                                                                                           | Default                          | Required |
-|-------------------------------|-----------------------------------------------------------------------------------------------------------------------|:--------------------------------:|:--------:|
+|-------------------------------|-----------------------------------------------------------------------------------------------------------------------|----------------------------------|:--------:|
 | `namespace`                   | The namespace in which to define the tasks                                                                            | -                                | no       |
 | `dependency`                  | The name of the dependency, used in status reporting                                                                  | -                                | yes      |
 | `version`                     | The version of the dependency to manage, only required if used in templates or `needs_fetch`                          | -                                | no       |
