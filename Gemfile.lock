@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    rake_dependencies (0.15.1)
+    rake_dependencies (0.15.2.pre1)
       hamster (~> 3.0)
       minitar (~> 0.6)
       rubyzip (~> 1.1)
@@ -64,4 +64,4 @@ DEPENDENCIES
   simplecov (~> 0.13)
 
 BUNDLED WITH
-   1.14.5
+   1.16.4
