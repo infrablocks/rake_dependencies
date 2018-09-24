@@ -81,19 +81,49 @@ task :provision_database => ['terraform:ensure'] do
 end
 ```
 
+If the `installation_directory` attribute is supplied, an additional `install` 
+task will be defined:
+
+```ruby
+ RakeDependencies::Tasks::All.new do |t|
+   t.namespace = :terraform
+   t.dependency = 'terraform'
+   
+   # ...
+   t.installation_directory = "#{ENV['HOME']}/bin"
+   # ...
+end
+```
+
+Then:
+
+```bash
+> rake -T
+rake terraform:clean     # Clean vendored terraform
+rake terraform:download  # Download terraform distribution
+rake terraform:ensure    # Ensure terraform present
+rake terraform:extract   # Extract terraform archive
+rake terraform:fetch     # Fetch terraform
+rake terraform:install   # Install terraform
+```
+
+The `<ns>:install` task copies the binary into the defined installation 
+directory which can be anywhere on the filesystem.
+
 The `RakeDependencies::Tasks::All` tasklib supports the following configuration
 parameters:
 
 | Name                          | Description                                                                                                           | Default                          | Required |
 |-------------------------------|-----------------------------------------------------------------------------------------------------------------------|----------------------------------|:--------:|
 | `namespace`                   | The namespace in which to define the tasks                                                                            | -                                | no       |
-| `dependency`                  | The name of the dependency, used in status reporting                                                                  | -                                | yes      |
+| `dependency`                  | The name of the dependency, used in status reporting and as the default binary name                                   | -                                | yes      |
 | `version`                     | The version of the dependency to manage, only required if used in templates or `needs_fetch`                          | -                                | no       |
 | `path`                        | The path in which to install the dependency                                                                           | -                                | yes      |
 | `type`                        | The archive type of the distribution, one of `:zip`, `:tar_gz`, `:tgz` or `:uncompressed`                             | `:zip`                           | yes      |
 | `os_ids`                      | A map of platforms to OS identifiers to use in templates, containing entries for `:mac` and `:linux`                  | `{:mac: 'mac', :linux: 'linux'}` | yes      |
 | `distribution_directory`      | The name of the directory under the supplied path into which to download the distribution                             | `'dist'`                         | yes      |
 | `binary_directory`            | The name of the directory under the supplied path into which to extract/copy the binaries                             | `'bin'`                          | yes      |
+| `installation_directory`      | The name of the directory into which to install the binaries, anywhere on the file system                             | -                                | no       |
 | `uri_template`                | A template for the URI of the distribution                                                                            | -                                | yes      |
 | `file_name_template`          | A template for the name of the downloaded file                                                                        | -                                | yes      |
 | `target_name_template`        | A template for the name of the binary after extraction/copying                                                        | -                                | no       |
@@ -102,6 +132,7 @@ parameters:
 | `clean_task_name`             | The name of the clean task, required if it should be different from the default                                       | `:clean`                         | yes      |
 | `download_task_name`          | The name of the download task, required if it should be different from the default                                    | `:download`                      | yes      |
 | `extract_task_name`           | The name of the extract task, required if it should be different from the default                                     | `:extract`                       | yes      |
+| `install_task_name`           | The name of the install task, required if it should be different from the default                                     | `:install`                       | no       |
 | `fetch_task_name`             | The name of the fetch task, required if it should be different from the default                                       | `:fetch`                         | yes      |
 | `ensure_task_name`            | The name of the ensure task, required if it should be different from the default                                      | `:ensure`                        | yes      |
 
@@ -125,6 +156,7 @@ in its definition:
 * `RakeDependencies::Tasks::Clean`
 * `RakeDependencies::Tasks::Download`
 * `RakeDependencies::Tasks::Extract`
+* `RakeDependencies::Tasks::Install`
 * `RakeDependencies::Tasks::Fetch`
 * `RakeDependencies::Tasks::Ensure`
 
@@ -192,6 +224,27 @@ Notes:
 * The extractor map can be overridden but should include entries for all of the
   above.
 
+### `RakeDependencies::Tasks::Install`
+
+The `RakeDependencies::Tasks::Install` tasklib supports the following 
+configuration parameters:
+
+| Name                     | Description                                                                                          | Default                            | Required |
+|--------------------------|------------------------------------------------------------------------------------------------------|------------------------------------|:--------:|
+| `name`                   | The name of the task, required if it should be different from the default                            | `:install`                         | yes      |
+| `dependency`             | The name of the dependency, used in status reporting                                                 | -                                  | yes      |
+| `version`                | The version of the dependency to manage, only required if used in templates                          | -                                  | no       |
+| `path`                   | The path in which to install the dependency                                                          | -                                  | yes      |
+| `type`                   | The archive type of the original distribution, one of `:zip`, `:tar_gz`, `:tgz` or `:uncompressed`   | `:zip`                             | yes      |
+| `os_ids`                 | A map of platforms to OS identifiers to use in templates, containing entries for `:mac` and `:linux` | `{:mac: 'mac', :linux: 'linux'}`   | yes      |
+| `binary_directory`       | The name of the directory under the supplied path into which to extract/copy the binaries            | `'bin'`                            | yes      |
+| `installation_directory` | The name of the directory into which the binary should be installed                                  | -                                  | yes      |
+| `binary_name_template`   | A template for the name of the binary                                                                | -                                  | yes      |
+
+Notes:
+* The templates have the same instance variables in scope when rendered as 
+  mentioned above.
+
 ### `RakeDependencies::Tasks::Fetch`
 
 The `RakeDependencies::Tasks::Fetch` tasklib supports the following 
@@ -220,6 +273,7 @@ configuration parameters:
 | `clean_task`       | The full name including namespaces of the clean task                                                                  | `<current-namespace>:clean`    | yes      |
 | `download_task`    | The full name including namespaces of the download task                                                               | `<current-namespace>:download` | yes      |
 | `extract_task`     | The full name including namespaces of the extract task                                                                | `<current-namespace>:extract`  | yes      |
+| `install_task`     | The full name including namespaces of the install task                                                                | `<current-namespace>:install`  | yes      |
 
 Notes:
 * The templates have the same instance variables in scope when rendered as 

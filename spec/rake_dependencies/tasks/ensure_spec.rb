@@ -5,7 +5,8 @@ describe RakeDependencies::Tasks::Ensure do
 
   def define_task(name = nil, options = {}, &block)
     ns = options[:namespace] || :dependency
-    additional_tasks = options[:additional_tasks] || [:clean, :download, :extract]
+    additional_tasks = options[:additional_tasks] ||
+        [:clean, :download, :extract, :install]
 
     namespace ns do
       additional_tasks.each do |t|
@@ -50,7 +51,8 @@ describe RakeDependencies::Tasks::Ensure do
     end
 
     it 'allows the clean task to be overridden' do
-      define_task(nil, additional_tasks: [:tidy, :download, :extract]) do |t|
+      define_task(nil,
+                  additional_tasks: [:tidy, :download, :extract, :install]) do |t|
         t.clean_task = :tidy
         t.needs_fetch = lambda { |_| true }
       end
@@ -60,12 +62,14 @@ describe RakeDependencies::Tasks::Ensure do
       expect(Rake::Task['dependency:tidy']).to(receive(:invoke).ordered)
       expect(Rake::Task['dependency:download']).to(receive(:invoke).ordered)
       expect(Rake::Task['dependency:extract']).to(receive(:invoke).ordered)
+      expect(Rake::Task['dependency:install']).to(receive(:invoke).ordered)
 
       ensure_task.invoke
     end
 
     it 'allows the download task to be overridden' do
-      define_task(nil, additional_tasks: [:clean, :dl, :extract]) do |t|
+      define_task(nil,
+                  additional_tasks: [:clean, :dl, :extract, :install]) do |t|
         t.download_task = :dl
         t.needs_fetch = lambda { |_| true }
       end
@@ -75,12 +79,16 @@ describe RakeDependencies::Tasks::Ensure do
       expect(Rake::Task['dependency:clean']).to(receive(:invoke).ordered)
       expect(Rake::Task['dependency:dl']).to(receive(:invoke).ordered)
       expect(Rake::Task['dependency:extract']).to(receive(:invoke).ordered)
+      expect(Rake::Task['dependency:install']).to(receive(:invoke).ordered)
 
       ensure_task.invoke
     end
 
     it 'allows the extract task to be overridden' do
-      define_task(nil, additional_tasks: [:clean, :download, :unarchive]) do |t|
+      define_task(nil,
+                  additional_tasks: [
+                      :clean, :download, :unarchive, :install
+                  ]) do |t|
         t.extract_task = :unarchive
         t.needs_fetch = lambda { |_| true }
       end
@@ -90,6 +98,39 @@ describe RakeDependencies::Tasks::Ensure do
       expect(Rake::Task['dependency:clean']).to(receive(:invoke).ordered)
       expect(Rake::Task['dependency:download']).to(receive(:invoke).ordered)
       expect(Rake::Task['dependency:unarchive']).to(receive(:invoke).ordered)
+      expect(Rake::Task['dependency:install']).to(receive(:invoke).ordered)
+
+      ensure_task.invoke
+    end
+
+    it 'allows the install task to be overridden' do
+      define_task(nil,
+                  additional_tasks: [:clean, :download, :extract, :copy]) do |t|
+        t.install_task = :copy
+        t.needs_fetch = lambda { |_| true }
+      end
+
+      ensure_task = Rake::Task['dependency:ensure']
+
+      expect(Rake::Task['dependency:clean']).to(receive(:invoke).ordered)
+      expect(Rake::Task['dependency:download']).to(receive(:invoke).ordered)
+      expect(Rake::Task['dependency:extract']).to(receive(:invoke).ordered)
+      expect(Rake::Task['dependency:copy']).to(receive(:invoke).ordered)
+
+      ensure_task.invoke
+    end
+
+    it 'does not invoke the install task if it is not defined' do
+      define_task(nil,
+                  additional_tasks: [:clean, :download, :extract]) do |t|
+        t.needs_fetch = lambda { |_| true }
+      end
+
+      ensure_task = Rake::Task['dependency:ensure']
+
+      expect(Rake::Task['dependency:clean']).to(receive(:invoke).ordered)
+      expect(Rake::Task['dependency:download']).to(receive(:invoke).ordered)
+      expect(Rake::Task['dependency:extract']).to(receive(:invoke).ordered)
 
       ensure_task.invoke
     end

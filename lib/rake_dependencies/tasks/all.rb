@@ -19,6 +19,7 @@ module RakeDependencies
 
       parameter :distribution_directory, default: 'dist'
       parameter :binary_directory, default: 'bin'
+      parameter :installation_directory
 
       parameter :uri_template, :required => true
       parameter :file_name_template, :required => true
@@ -30,6 +31,7 @@ module RakeDependencies
       parameter :clean_task_name, :default => :clean
       parameter :download_task_name, :default => :download
       parameter :extract_task_name, :default => :extract
+      parameter :install_task_name, :default => :install
       parameter :fetch_task_name, :default => :fetch
       parameter :ensure_task_name, :default => :ensure
 
@@ -86,6 +88,21 @@ module RakeDependencies
           t.strip_path_template = strip_path_template
           t.target_name_template = target_name_template
         end
+        Install.new do |t|
+          t.name = install_task_name
+
+          t.dependency = dependency
+          t.version = version
+          t.path = path
+          t.type = type
+
+          t.os_ids = os_ids
+
+          t.binary_directory = binary_directory
+          t.binary_name_template = target_name_template || dependency
+
+          t.installation_directory = installation_directory
+        end if installation_directory
         Fetch.new do |t|
           t.name = fetch_task_name
 
@@ -108,6 +125,7 @@ module RakeDependencies
           t.clean_task = clean_task_name
           t.download_task = download_task_name
           t.extract_task = extract_task_name
+          t.install_task = install_task_name
         end
       end
     end

@@ -46,8 +46,8 @@ module RakeDependencies
           }
 
           distribution_file_name = Template.new(file_name_template)
-             .with_parameters(parameters)
-             .render
+                                       .with_parameters(parameters)
+                                       .render
           distribution_file_directory = File.join(path, distribution_directory)
           distribution_file_path = File.join(
               distribution_file_directory, distribution_file_name)
@@ -57,14 +57,14 @@ module RakeDependencies
           options = {}
           if strip_path_template
             options[:strip_path] = Template.new(strip_path_template)
-                .with_parameters(parameters)
-                .render
+                                       .with_parameters(parameters)
+                                       .render
           end
 
           if target_name_template
             options[:rename_to] = Template.new(target_name_template)
-                .with_parameters(parameters)
-                .render
+                                      .with_parameters(parameters)
+                                      .render
           end
 
           extractor = extractor_for_extension.new(
@@ -95,12 +95,16 @@ module RakeDependencies
 
       def ext
         case resolved_type
-          when :tar_gz then '.tar.gz'
-          when :tgz then '.tgz'
-          when :zip then '.zip'
-          when :uncompressed then ''
-          else
-            raise "Unknown type: #{type}"
+        when :tar_gz then
+          '.tar.gz'
+        when :tgz then
+          '.tgz'
+        when :zip then
+          '.zip'
+        when :uncompressed then
+          ''
+        else
+          raise "Unknown type: #{type}"
         end
       end
     end

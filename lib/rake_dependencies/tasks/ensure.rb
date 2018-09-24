@@ -16,6 +16,7 @@ module RakeDependencies
       parameter :clean_task, default: :clean
       parameter :download_task, default: :download
       parameter :extract_task, default: :extract
+      parameter :install_task, default: :install
 
       def process_arguments args
         super(args)
@@ -27,6 +28,15 @@ module RakeDependencies
         download = Rake::Task[scoped_task_name(download_task)]
         extract = Rake::Task[scoped_task_name(extract_task)]
 
+        resolved_install_task = scoped_task_name(install_task)
+        install = if Rake::Task.task_defined?(resolved_install_task)
+                    Rake::Task[scoped_task_name(install_task)]
+                  else
+                    no_op_task = Object.new
+                    def no_op_task.invoke; end
+                    no_op_task
+                  end
+
         desc "Ensure #{dependency} present"
         task name do
           parameters = {
@@ -35,7 +45,7 @@ module RakeDependencies
               binary_directory: binary_directory
           }
           if needs_fetch.call(parameters)
-            [clean, download, extract].map(&:invoke)
+            [clean, download, extract, install].map(&:invoke)
           end
         end
       end
