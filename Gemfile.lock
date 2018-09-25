@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    rake_dependencies (0.17.0)
+    rake_dependencies (0.17.1.pre1)
       hamster (~> 3.0)
       minitar (~> 0.6)
       rubyzip (~> 1.1)
