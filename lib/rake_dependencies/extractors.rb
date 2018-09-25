@@ -26,10 +26,11 @@ module RakeDependencies
           end
         end
         if @options[:rename_from] && @options[:rename_to]
-          FileUtils.mkdir_p(File.dirname(@options[:rename_to]))
+          FileUtils.mkdir_p(
+              File.dirname(File.join(@extract_path, @options[:rename_to])))
           FileUtils.mv(
               File.join(@extract_path, @options[:rename_from]),
-              @options[:rename_to])
+              File.join(@extract_path, @options[:rename_to]))
         end
       end
     end
@@ -59,10 +60,11 @@ module RakeDependencies
           end
         end
         if @options[:rename_from] && @options[:rename_to]
-          FileUtils.mkdir_p(File.dirname(@options[:rename_to]))
+          FileUtils.mkdir_p(
+              File.dirname(File.join(@extract_path, @options[:rename_to])))
           FileUtils.mv(
               File.join(@extract_path, @options[:rename_from]),
-              @options[:rename_to])
+              File.join(@extract_path, @options[:rename_to]))
         end
       end
     end
