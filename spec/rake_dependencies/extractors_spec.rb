@@ -195,10 +195,11 @@ describe RakeDependencies::Extractors do
               rename_to: 'some/path/the-binary'})
 
       expect(FileUtils).to(receive(:mkdir_p).with('some/path'))
-      expect(FileUtils).to(receive(:mv)
-                               .with(
-                                   'directory/containing1/file1',
-                                   'some/path/the-binary'))
+      expect(FileUtils)
+          .to(receive(:mv)
+                  .with(
+                      File.join(extract_path, 'directory/containing1/file1'),
+                      'some/path/the-binary'))
 
       extractor.extract
     end
@@ -417,10 +418,11 @@ describe RakeDependencies::Extractors do
               rename_to: 'some/path/the-binary'})
 
       expect(FileUtils).to(receive(:mkdir_p).with('some/path'))
-      expect(FileUtils).to(receive(:mv)
-                               .with(
-                                   'directory/containing1/file1',
-                                   'some/path/the-binary'))
+      expect(FileUtils)
+          .to(receive(:mv)
+                  .with(
+                      File.join(extract_path, 'directory/containing1/file1'),
+                      'some/path/the-binary'))
 
       extractor.extract
     end
