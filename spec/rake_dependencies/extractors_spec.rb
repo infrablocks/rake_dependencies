@@ -121,7 +121,7 @@ describe RakeDependencies::Extractors do
 
       full_entry_path = File.join(extract_path, existing_entry_path)
       FileUtils.mkdir_p(File.dirname(full_entry_path))
-      File.open(full_entry_path, 'w') { |f| f.write("I'm here") }
+      File.open(full_entry_path, 'w') {|f| f.write("I'm here")}
 
       expect(zip_file).not_to(receive(:extract).with(existing_entry, File.join(extract_path, existing_entry.name)))
 
@@ -173,6 +173,32 @@ describe RakeDependencies::Extractors do
       expect(zip_file).to(receive(:extract).with(entry1, File.join(extract_path, 'containing1/file1')))
       expect(zip_file).to(receive(:extract).with(entry2, File.join(extract_path, 'containing2/file2')))
       expect(zip_file).to(receive(:extract).with(entry3, File.join(extract_path, 'file3')))
+
+      extractor.extract
+    end
+
+    it 'renames the resulting binary when rename from and to are specified' do
+      zip_file_path = 'some/path/to/the-file.zip'
+      extract_path = 'some/path/for/extraction'
+
+      entry1 = build_zip_entry_for('directory/containing1/file1')
+      entry2 = build_zip_entry_for('directory/containing2/file2')
+      entry3 = build_zip_entry_for('file3')
+
+      stub_make_directory
+      stub_zip_file_open_for(entry1, entry2, entry3)
+
+      extractor = ZipExtractor.new(
+          zip_file_path, extract_path,
+          {
+              rename_from: 'directory/containing1/file1',
+              rename_to: 'some/path/the-binary'})
+
+      expect(FileUtils).to(receive(:mkdir_p).with('some/path'))
+      expect(FileUtils).to(receive(:mv)
+                               .with(
+                                   'directory/containing1/file1',
+                                   'some/path/the-binary'))
 
       extractor.extract
     end
@@ -298,9 +324,9 @@ describe RakeDependencies::Extractors do
       extractor = TarGzExtractor.new(tgz_file_path, extract_path)
       extractor.extract
 
-      expect(File.open('some/path/for/extraction/directory/containing1/file1') { |f| f.read }).to eq('File1')
-      expect(File.open('some/path/for/extraction/directory/containing2/file2') { |f| f.read }).to eq('File2')
-      expect(File.open('some/path/for/extraction/file3') { |f| f.read }).to eq('File3')
+      expect(File.open('some/path/for/extraction/directory/containing1/file1') {|f| f.read}).to eq('File1')
+      expect(File.open('some/path/for/extraction/directory/containing2/file2') {|f| f.read}).to eq('File2')
+      expect(File.open('some/path/for/extraction/file3') {|f| f.read}).to eq('File3')
     end
 
     it 'does not extract the entry if a file already exists at the extract path' do
@@ -315,12 +341,12 @@ describe RakeDependencies::Extractors do
 
       full_entry_path = File.join(extract_path, existing_entry_path)
       FileUtils.mkdir_p(File.dirname(full_entry_path))
-      File.open(full_entry_path, 'w') { |f| f.write('Existing') }
+      File.open(full_entry_path, 'w') {|f| f.write('Existing')}
 
       extractor = TarGzExtractor.new(tgz_file_path, extract_path)
       extractor.extract
 
-      expect(File.open(full_entry_path) { |f| f.read }).to eq('Existing')
+      expect(File.open(full_entry_path) {|f| f.read}).to eq('Existing')
     end
 
     it 'recursively makes directories for the stripped tgz file entries when a strip path option is supplied' do
@@ -363,9 +389,40 @@ describe RakeDependencies::Extractors do
       extractor = TarGzExtractor.new(tgz_file_path, extract_path, options)
       extractor.extract
 
-      expect(File.open('some/path/for/extraction/containing1/file1') { |f| f.read }).to eq('File1')
-      expect(File.open('some/path/for/extraction/containing2/file2') { |f| f.read }).to eq('File2')
-      expect(File.open('some/path/for/extraction/file3') { |f| f.read }).to eq('File3')
+      expect(File.open('some/path/for/extraction/containing1/file1') {|f| f.read}).to eq('File1')
+      expect(File.open('some/path/for/extraction/containing2/file2') {|f| f.read}).to eq('File2')
+      expect(File.open('some/path/for/extraction/file3') {|f| f.read}).to eq('File3')
+    end
+
+    it 'renames the resulting binary when rename from and to are specified' do
+      tgz_file_path = 'some/path/to/the-file.tar.gz'
+      extract_path = 'some/path/for/extraction'
+
+      entry1 = build_tar_entry_for('directory', file: false, mode: 755)
+      entry2 = build_tar_entry_for('directory/containing1', file: false, mode: 755)
+      entry3 = build_tar_entry_for('directory/containing1/file1', file: true, mode: 644, contents: 'File1')
+      entry4 = build_tar_entry_for('directory/containing2', file: false, mode: 755)
+      entry5 = build_tar_entry_for('directory/containing2/file2', file: true, mode: 644, contents: 'File2')
+      entry6 = build_tar_entry_for('file3', file: true, mode: 644, contents: 'File3')
+
+      stub_gzip_file_open
+      stub_make_directory
+      stub_file_open
+      stub_tar_file_open_for(entry1, entry2, entry3, entry4, entry5, entry6)
+
+      extractor = TarGzExtractor.new(
+          tgz_file_path, extract_path,
+          {
+              rename_from: 'directory/containing1/file1',
+              rename_to: 'some/path/the-binary'})
+
+      expect(FileUtils).to(receive(:mkdir_p).with('some/path'))
+      expect(FileUtils).to(receive(:mv)
+                               .with(
+                                   'directory/containing1/file1',
+                                   'some/path/the-binary'))
+
+      extractor.extract
     end
   end
 
@@ -411,7 +468,7 @@ describe RakeDependencies::Extractors do
       extractor.extract
     end
 
-    it 'renames the binary when the rename_to option is provided' do
+    it 'renames the binary when the rename_from and rename_to options are provided' do
       uncompressed_file_path = 'some/path/to/the-file'
       extract_path = 'some/path/for/extraction'
       options = {rename_to: 'other-file'}

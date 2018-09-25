@@ -27,7 +27,8 @@ module RakeDependencies
       parameter :version
       parameter :path, required: true
       parameter :file_name_template, required: true
-      parameter :target_name_template
+      parameter :source_binary_name_template
+      parameter :target_binary_name_template
       parameter :strip_path_template
 
       def process_arguments args
@@ -61,8 +62,11 @@ module RakeDependencies
                                        .render
           end
 
-          if target_name_template
-            options[:rename_to] = Template.new(target_name_template)
+          if source_binary_name_template && target_binary_name_template
+            options[:rename_from] = Template.new(source_binary_name_template)
+                                        .with_parameters(parameters)
+                                        .render
+            options[:rename_to] = Template.new(target_binary_name_template)
                                       .with_parameters(parameters)
                                       .render
           end

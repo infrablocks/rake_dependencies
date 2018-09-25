@@ -23,8 +23,10 @@ module RakeDependencies
 
       parameter :uri_template, :required => true
       parameter :file_name_template, :required => true
-      parameter :target_name_template
       parameter :strip_path_template
+
+      parameter :source_binary_name_template
+      parameter :target_binary_name_template
 
       parameter :needs_fetch, :required => true
 
@@ -86,7 +88,9 @@ module RakeDependencies
 
           t.file_name_template = file_name_template
           t.strip_path_template = strip_path_template
-          t.target_name_template = target_name_template
+
+          t.source_binary_name_template = source_binary_name_template
+          t.target_binary_name_template = target_binary_name_template
         end
         Install.new do |t|
           t.name = install_task_name
@@ -99,7 +103,7 @@ module RakeDependencies
           t.os_ids = os_ids
 
           t.binary_directory = binary_directory
-          t.binary_name_template = target_name_template || dependency
+          t.binary_name_template = target_binary_name_template || dependency
 
           t.installation_directory = installation_directory
         end if installation_directory

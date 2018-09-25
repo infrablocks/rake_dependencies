@@ -25,6 +25,10 @@ module RakeDependencies
             zip_file_entries.extract(entry, file_path) unless File.exist?(file_path)
           end
         end
+        if @options[:rename_from] && @options[:rename_to]
+          FileUtils.mkdir_p(File.dirname(@options[:rename_to]))
+          FileUtils.mv(@options[:rename_from], @options[:rename_to])
+        end
       end
     end
 
@@ -51,6 +55,10 @@ module RakeDependencies
               end
             end
           end
+        end
+        if @options[:rename_from] && @options[:rename_to]
+          FileUtils.mkdir_p(File.dirname(@options[:rename_to]))
+          FileUtils.mv(@options[:rename_from], @options[:rename_to])
         end
       end
     end

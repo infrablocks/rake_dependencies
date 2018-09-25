@@ -126,7 +126,8 @@ parameters:
 | `installation_directory`      | The name of the directory into which to install the binaries, anywhere on the file system                             | -                                | no       |
 | `uri_template`                | A template for the URI of the distribution                                                                            | -                                | yes      |
 | `file_name_template`          | A template for the name of the downloaded file                                                                        | -                                | yes      |
-| `target_name_template`        | A template for the name of the binary after extraction/copying                                                        | -                                | no       |
+| `source_binary_name_template` | A template for the name of the binary before rename after extraction/copying                                          | -                                | no       |
+| `target_binary_name_template` | A template for the name to rename the binary to after extraction/copying                                              | -                                | no       |
 | `strip_path_template`         | A template for the path to strip within an archive before extracting                                                  | -                                | no       |
 | `needs_fetch`                 | A lambda taking a parameter map that should return `true` if the dependency needs to be fetched, `false` otherwise    | Will always return `true`        | no       |
 | `clean_task_name`             | The name of the clean task, required if it should be different from the default                                       | `:clean`                         | yes      |
@@ -197,20 +198,21 @@ Notes:
 The `RakeDependencies::Tasks::Extract` tasklib supports the following 
 configuration parameters:
 
-| Name                     | Description                                                                                          | Default                            | Required |
-|--------------------------|------------------------------------------------------------------------------------------------------|------------------------------------|:--------:|
-| `name`                   | The name of the task, required if it should be different from the default                            | `:extract`                         | yes      |
-| `dependency`             | The name of the dependency, used in status reporting                                                 | -                                  | yes      |
-| `version`                | The version of the dependency to manage, only required if used in templates                          | -                                  | no       |
-| `path`                   | The path in which to install the dependency                                                          | -                                  | yes      |
-| `type`                   | The archive type of the distribution, one of `:zip`, `:tar_gz`, `:tgz` or `:uncompressed`            | `:zip`                             | yes      |
-| `os_ids`                 | A map of platforms to OS identifiers to use in templates, containing entries for `:mac` and `:linux` | `{:mac: 'mac', :linux: 'linux'}`   | yes      |
-| `extractors`             | A map of archive types to extractor classes, see notes for further details                           | Extractors for all supported types | yes      |
-| `distribution_directory` | The name of the directory under the supplied path into which the distribution was downloaded         | `'dist'`                           | yes      |
-| `binary_directory`       | The name of the directory under the supplied path into which to extract/copy the binaries            | `'bin'`                            | yes      |
-| `file_name_template`     | A template for the name of the downloaded file                                                       | -                                  | yes      |
-| `target_name_template`   | A template for the name to give the binary after extraction/copying                                  | -                                  | no       |
-| `strip_path_template`    | A template for the path to strip within an archive before extracting                                 | -                                  | no       |
+| Name                          | Description                                                                                          | Default                            | Required |
+|-------------------------------|------------------------------------------------------------------------------------------------------|------------------------------------|:--------:|
+| `name`                        | The name of the task, required if it should be different from the default                            | `:extract`                         | yes      |
+| `dependency`                  | The name of the dependency, used in status reporting                                                 | -                                  | yes      |
+| `version`                     | The version of the dependency to manage, only required if used in templates                          | -                                  | no       |
+| `path`                        | The path in which to install the dependency                                                          | -                                  | yes      |
+| `type`                        | The archive type of the distribution, one of `:zip`, `:tar_gz`, `:tgz` or `:uncompressed`            | `:zip`                             | yes      |
+| `os_ids`                      | A map of platforms to OS identifiers to use in templates, containing entries for `:mac` and `:linux` | `{:mac: 'mac', :linux: 'linux'}`   | yes      |
+| `extractors`                  | A map of archive types to extractor classes, see notes for further details                           | Extractors for all supported types | yes      |
+| `distribution_directory`      | The name of the directory under the supplied path into which the distribution was downloaded         | `'dist'`                           | yes      |
+| `binary_directory`            | The name of the directory under the supplied path into which to extract/copy the binaries            | `'bin'`                            | yes      |
+| `file_name_template`          | A template for the name of the downloaded file                                                       | -                                  | yes      |
+| `source_binary_name_template` | A template for the name of the binary before rename after extraction/copying                         | -                                  | no       |
+| `target_binary_name_template` | A template for the name to rename the binary to after extraction/copying                             | -                                  | no       |
+| `strip_path_template`         | A template for the path to strip within an archive before extracting                                 | -                                  | no       |
 
 Notes:
 * The templates have the same instance variables in scope when rendered as 

@@ -389,28 +389,6 @@ describe RakeDependencies::Tasks::Extract do
 
       Rake::Task['dependency:extract'].invoke
     end
-
-    it 'passes the target name when present' do
-      define_task do |t|
-        t.type = :uncompressed
-        t.target_name_template = 'binary.<%= @os_id %>'
-      end
-      set_platform_to('linux')
-
-      extractor = double('tgz extractor')
-
-      expect(RakeDependencies::Extractors::UncompressedExtractor)
-          .to(receive(:new)
-                  .with(
-                      anything,
-                      anything,
-                      {rename_to: 'binary.linux'})
-                  .and_return(extractor))
-      expect(extractor)
-          .to(receive(:extract))
-
-      Rake::Task['dependency:extract'].invoke
-    end
   end
 
   context 'extraction options' do
@@ -427,6 +405,30 @@ describe RakeDependencies::Tasks::Extract do
           .to(receive(:new)
                   .with(anything, anything, { strip_path: 'strip/0.1.0-mac' })
                   .and_return(extractor))
+
+      Rake::Task['dependency:extract'].invoke
+    end
+
+    it 'passes the source and target binary names when present' do
+      define_task do |t|
+        t.type = :zip
+        t.version = '1.2.3'
+        t.source_binary_name_template = 'binary.<%= @version %>'
+        t.target_binary_name_template = 'binary.<%= @os_id %>'
+      end
+      set_platform_to('linux')
+
+      extractor = double('zip extractor')
+
+      expect(RakeDependencies::Extractors::ZipExtractor)
+          .to(receive(:new)
+                  .with(
+                      anything,
+                      anything,
+                      {rename_from: 'binary.1.2.3', rename_to: 'binary.linux'})
+                  .and_return(extractor))
+      expect(extractor)
+          .to(receive(:extract))
 
       Rake::Task['dependency:extract'].invoke
     end
