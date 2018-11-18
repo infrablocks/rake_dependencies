@@ -57,7 +57,7 @@ DEPENDENCIES
   activesupport (~> 5.2)
   bundler (~> 1.17)
   fakefs (~> 0.18)
-  gem-release (~> 2.0.1)
+  gem-release (~> 2.0)
   rake (~> 12.3)
   rake_dependencies!
   rspec (~> 3.8)
