@@ -6,6 +6,7 @@ jobs:
     - image: ruby:2.3.8
     steps:
     - checkout
+    - run: ./scripts/ci/common/configure-rubygems.sh
     - run: ./scripts/ci/steps/test.sh
   prerelease:
     working_directory: ~/rake-dependencies
