@@ -11,6 +11,7 @@ cd "$PROJECT_DIR"
 
 set +e
 openssl aes-256-cbc \
+    -md md5 \
     -d \
     -in ./.circleci/gpg.private.enc -k "${ENCRYPTION_PASSPHRASE}" | gpg --import -
 set -e
