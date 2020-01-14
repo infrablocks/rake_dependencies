@@ -22,7 +22,7 @@ Gem::Specification.new do |spec|
   spec.executables = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ['lib']
 
-  spec.required_ruby_version = '>= 2.3.8'
+  spec.required_ruby_version = '>= 2.4.9'
 
   spec.add_dependency 'rake_factory', '~> 0.7'
   spec.add_dependency 'hamster', '~> 3.0'
