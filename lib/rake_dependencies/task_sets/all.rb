@@ -12,10 +12,10 @@ module RakeDependencies
     class All < RakeFactory::TaskSet
       parameter :containing_namespace
 
-      parameter :dependency, :required => true
+      parameter :dependency, required: true
       parameter :version
-      parameter :path, :required => true
-      parameter :type, :default => :zip
+      parameter :path, required: true
+      parameter :type, default: :zip
 
       parameter :os_ids, default: {mac: 'mac', linux: 'linux'}
 
@@ -23,21 +23,21 @@ module RakeDependencies
       parameter :binary_directory, default: 'bin'
       parameter :installation_directory
 
-      parameter :uri_template, :required => true
-      parameter :file_name_template, :required => true
+      parameter :uri_template, required: true
+      parameter :file_name_template, required: true
       parameter :strip_path_template
 
       parameter :source_binary_name_template
       parameter :target_binary_name_template
 
-      parameter :needs_fetch, :required => true
+      parameter :needs_fetch, required: true, lazy: true
 
-      parameter :clean_task_name, :default => :clean
-      parameter :download_task_name, :default => :download
-      parameter :extract_task_name, :default => :extract
-      parameter :install_task_name, :default => :install
-      parameter :fetch_task_name, :default => :fetch
-      parameter :ensure_task_name, :default => :ensure
+      parameter :clean_task_name, default: :clean
+      parameter :download_task_name, default: :download
+      parameter :extract_task_name, default: :extract
+      parameter :install_task_name, default: :install
+      parameter :fetch_task_name, default: :fetch
+      parameter :ensure_task_name, default: :ensure
 
       alias namespace= containing_namespace=
 
