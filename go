@@ -35,8 +35,10 @@ fi
 if [[ "$offline" = "no" ]]; then
     echo "Installing bundler."
     if [[ "$verbose" = "yes" ]]; then
+        gem update --system
         gem install --no-document bundler
     else
+        gem update --system > /dev/null
         gem install --no-document bundler > /dev/null
     fi
 
