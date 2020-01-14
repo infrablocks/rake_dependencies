@@ -1,12 +1,14 @@
+require 'rake_factory'
 require 'zip'
-require_relative '../tasklib'
+
 require_relative '../template'
 require_relative '../extractors'
 
 module RakeDependencies
   module Tasks
-    class Extract < TaskLib
-      parameter :name, default: :extract
+    class Extract < RakeFactory::Task
+      default_name :extract
+      default_description ->(t) { "Extract #{t.dependency} archive" }
 
       parameter :type, default: :zip
       parameter :os_ids, default: {
@@ -31,52 +33,44 @@ module RakeDependencies
       parameter :target_binary_name_template
       parameter :strip_path_template
 
-      def process_arguments args
-        super(args)
-        self.name = args[0] if args[0]
-      end
+      action do
+        parameters = {
+            version: version,
+            platform: platform,
+            os_id: os_id,
+            ext: ext
+        }
 
-      def define
-        desc "Extract #{dependency} archive"
-        task name do
-          parameters = {
-              version: version,
-              platform: platform,
-              os_id: os_id,
-              ext: ext
-          }
+        distribution_file_name = Template.new(file_name_template)
+            .with_parameters(parameters)
+            .render
+        distribution_file_directory = File.join(path, distribution_directory)
+        distribution_file_path = File.join(
+            distribution_file_directory, distribution_file_name)
 
-          distribution_file_name = Template.new(file_name_template)
-                                       .with_parameters(parameters)
-                                       .render
-          distribution_file_directory = File.join(path, distribution_directory)
-          distribution_file_path = File.join(
-              distribution_file_directory, distribution_file_name)
+        extraction_path = File.join(path, binary_directory)
 
-          extraction_path = File.join(path, binary_directory)
-
-          options = {}
-          if strip_path_template
-            options[:strip_path] = Template.new(strip_path_template)
-                                       .with_parameters(parameters)
-                                       .render
-          end
-
-          if source_binary_name_template && target_binary_name_template
-            options[:rename_from] = Template.new(source_binary_name_template)
-                                        .with_parameters(parameters)
-                                        .render
-            options[:rename_to] = Template.new(target_binary_name_template)
-                                      .with_parameters(parameters)
-                                      .render
-          end
-
-          extractor = extractor_for_extension.new(
-              distribution_file_path,
-              extraction_path,
-              options)
-          extractor.extract
+        options = {}
+        if strip_path_template
+          options[:strip_path] = Template.new(strip_path_template)
+              .with_parameters(parameters)
+              .render
         end
+
+        if source_binary_name_template && target_binary_name_template
+          options[:rename_from] = Template.new(source_binary_name_template)
+              .with_parameters(parameters)
+              .render
+          options[:rename_to] = Template.new(target_binary_name_template)
+              .with_parameters(parameters)
+              .render
+        end
+
+        extractor = extractor_for_extension.new(
+            distribution_file_path,
+            extraction_path,
+            options)
+        extractor.extract
       end
 
       private

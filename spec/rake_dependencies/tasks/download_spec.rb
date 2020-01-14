@@ -3,11 +3,10 @@ require 'spec_helper'
 describe RakeDependencies::Tasks::Download do
   include_context :rake
 
-  def define_task(*args, &block)
+  def define_task(opts = {}, &block)
     namespace :dependency do
-      subject.new(*args) do |t|
+      subject.define({dependency: 'super-cool-tool'}.merge(opts)) do |t|
         t.path = 'vendor/dependency'
-        t.dependency = 'super-cool-tool'
         t.version = '1.2.3'
         t.type = :tar_gz
         t.uri_template = 'https://example.com/<%= @version %>/super-cool-tool-<%= @os_id %>-x86_64<%= @ext %>'
@@ -53,22 +52,22 @@ describe RakeDependencies::Tasks::Download do
   end
 
   it 'gives the download task a description' do
-    define_task { |t| t.dependency = 'the-thing' }
+    define_task(dependency: 'the-thing')
 
-    expect(rake.last_description).to(eq('Download the-thing distribution'))
+    expect(Rake::Task['dependency:download'].full_comment)
+        .to(eq('Download the-thing distribution'))
   end
 
   it 'allows the task name to be overridden' do
-    define_task(:fetch)
+    define_task(name: :fetch)
 
     expect(Rake::Task['dependency:fetch']).not_to be_nil
   end
 
   it 'allows multiple download tasks to be declared' do
     namespace :dependency1 do
-      subject.new do |t|
+      subject.define(dependency: 'super-cool-tool1') do |t|
         t.path = 'vendor/dependency1'
-        t.dependency = 'super-cool-tool1'
         t.version = '1.2.3'
         t.type = :tar_gz
         t.uri_template = 'https://example.com/<%= @version %>/super-cool-tool-<%= @os %>-x86_64<%= @ext %>'
@@ -77,9 +76,8 @@ describe RakeDependencies::Tasks::Download do
     end
 
     namespace :dependency2 do
-      subject.new do |t|
+      subject.define(dependency: 'super-cool-tool2') do |t|
         t.path = 'vendor/dependency2'
-        t.dependency = 'super-cool-tool2'
         t.version = '1.2.3'
         t.type = :tar_gz
         t.uri_template = 'https://example.com/<%= @version %>/super-cool-tool-<%= @os %>-x86_64<%= @ext %>'

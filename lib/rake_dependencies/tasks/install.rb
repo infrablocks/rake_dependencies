@@ -1,9 +1,10 @@
-require_relative '../tasklib'
+require 'rake_factory'
 
 module RakeDependencies
   module Tasks
-    class Install < TaskLib
-      parameter :name, default: :install
+    class Install < RakeFactory::Task
+      default_name :install
+      default_description ->(t) { "Install #{t.dependency}" }
 
       parameter :os_ids, default: {
           mac: 'mac',
@@ -20,31 +21,23 @@ module RakeDependencies
 
       parameter :installation_directory, required: true
 
-      def process_arguments args
-        super(args)
-        self.name = args[0] if args[0]
-      end
+      action do
+        parameters = {
+            version: version,
+            platform: platform,
+            os_id: os_id,
+            ext: ext
+        }
 
-      def define
-        desc "Install #{dependency}"
-        task name do
-          parameters = {
-              version: version,
-              platform: platform,
-              os_id: os_id,
-              ext: ext
-          }
+        binary_file_name = Template.new(binary_name_template)
+            .with_parameters(parameters)
+            .render
+        binary_file_directory = File.join(path, binary_directory)
+        binary_file_path = File.join(
+            binary_file_directory, binary_file_name)
 
-          binary_file_name = Template.new(binary_name_template)
-                                       .with_parameters(parameters)
-                                       .render
-          binary_file_directory = File.join(path, binary_directory)
-          binary_file_path = File.join(
-              binary_file_directory, binary_file_name)
-
-          mkdir_p installation_directory
-          cp binary_file_path, installation_directory
-        end
+        mkdir_p installation_directory
+        cp binary_file_path, installation_directory
       end
 
       def os_id

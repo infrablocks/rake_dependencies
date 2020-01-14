@@ -1,13 +1,15 @@
+require 'rake_factory'
+
 require_relative 'clean'
 require_relative 'download'
 require_relative 'ensure'
 require_relative 'extract'
 require_relative 'fetch'
-require_relative '../tasklib'
+
 
 module RakeDependencies
   module Tasks
-    class All < TaskLib
+    class All < RakeFactory::TaskSet
       parameter :containing_namespace
 
       parameter :dependency, :required => true
@@ -39,97 +41,26 @@ module RakeDependencies
 
       alias namespace= containing_namespace=
 
-      def define
+      task Clean, name: ->(ts) { ts.clean_task_name }
+      task Download, name: ->(ts) { ts.download_task_name }
+      task Extract, name: ->(ts) { ts.extract_task_name }
+      task Install, {
+          name: ->(ts) { ts.install_task_name },
+          define_if: ->(ts) { ts.installation_directory }
+      } do |ts, t|
+        t.binary_name_template =
+            ts.target_binary_name_template || ts.dependency
+      end
+      task Fetch, name: ->(ts) { ts.fetch_task_name }
+      task Ensure, name: ->(ts) { ts.ensure_task_name }
+
+      def define_on(application)
         if containing_namespace
           namespace containing_namespace do
-            define_tasks
+            super(application)
           end
         else
-          define_tasks
-        end
-      end
-
-      private
-
-      def define_tasks
-        Clean.new do |t|
-          t.name = clean_task_name
-
-          t.dependency = dependency
-          t.path = path
-        end
-        Download.new do |t|
-          t.name = download_task_name
-
-          t.dependency = dependency
-          t.version = version
-          t.path = path
-          t.type = type
-
-          t.os_ids = os_ids
-
-          t.distribution_directory = distribution_directory
-
-          t.uri_template = uri_template
-          t.file_name_template = file_name_template
-        end
-        Extract.new do |t|
-          t.name = extract_task_name
-
-          t.dependency = dependency
-          t.version = version
-          t.path = path
-          t.type = type
-
-          t.os_ids = os_ids
-
-          t.distribution_directory = distribution_directory
-          t.binary_directory = binary_directory
-
-          t.file_name_template = file_name_template
-          t.strip_path_template = strip_path_template
-
-          t.source_binary_name_template = source_binary_name_template
-          t.target_binary_name_template = target_binary_name_template
-        end
-        Install.new do |t|
-          t.name = install_task_name
-
-          t.dependency = dependency
-          t.version = version
-          t.path = path
-          t.type = type
-
-          t.os_ids = os_ids
-
-          t.binary_directory = binary_directory
-          t.binary_name_template = target_binary_name_template || dependency
-
-          t.installation_directory = installation_directory
-        end if installation_directory
-        Fetch.new do |t|
-          t.name = fetch_task_name
-
-          t.dependency = dependency
-
-          t.download_task = download_task_name
-          t.extract_task = extract_task_name
-        end
-        Ensure.new do |t|
-          t.name = ensure_task_name
-
-          t.dependency = dependency
-          t.version = version
-          t.path = path
-
-          t.binary_directory = binary_directory
-
-          t.needs_fetch = needs_fetch
-
-          t.clean_task = clean_task_name
-          t.download_task = download_task_name
-          t.extract_task = extract_task_name
-          t.install_task = install_task_name
+          super(application)
         end
       end
     end

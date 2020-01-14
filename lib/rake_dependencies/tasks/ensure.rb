@@ -1,9 +1,10 @@
-require_relative '../tasklib'
+require 'rake_factory'
 
 module RakeDependencies
   module Tasks
-    class Ensure < TaskLib
-      parameter :name, default: :ensure
+    class Ensure < RakeFactory::Task
+      default_name :ensure
+      default_description ->(t) { "Ensure #{t.dependency} present" }
 
       parameter :dependency, required: true
       parameter :version
@@ -11,49 +12,26 @@ module RakeDependencies
 
       parameter :binary_directory, default: 'bin'
 
-      parameter :needs_fetch, default: lambda { |_| true }
+      parameter :needs_fetch, default: true
 
-      parameter :clean_task, default: :clean
-      parameter :download_task, default: :download
-      parameter :extract_task, default: :extract
-      parameter :install_task, default: :install
+      parameter :clean_task_name, default: :clean
+      parameter :download_task_name, default: :download
+      parameter :extract_task_name, default: :extract
+      parameter :install_task_name, default: :install
 
-      def process_arguments args
-        super(args)
-        self.name = args[0] if args[0]
-      end
+      action do |t|
+        clean = Rake::Task[t.scope.path_with_task_name(t.clean_task_name)]
+        download = Rake::Task[t.scope.path_with_task_name(t.download_task_name)]
+        extract = Rake::Task[t.scope.path_with_task_name(t.extract_task_name)]
 
-      def define
-        clean = Rake::Task[scoped_task_name(clean_task)]
-        download = Rake::Task[scoped_task_name(download_task)]
-        extract = Rake::Task[scoped_task_name(extract_task)]
-
-        resolved_install_task = scoped_task_name(install_task)
-        install = if Rake::Task.task_defined?(resolved_install_task)
-                    Rake::Task[scoped_task_name(install_task)]
-                  else
-                    no_op_task = Object.new
-                    def no_op_task.invoke; end
-                    no_op_task
-                  end
-
-        desc "Ensure #{dependency} present"
-        task name do
-          parameters = {
-              path: path,
-              version: version,
-              binary_directory: binary_directory
-          }
-          if needs_fetch.call(parameters)
-            [clean, download, extract, install].map(&:invoke)
-          end
+        install_name = t.scope.path_with_task_name(t.install_task_name)
+        install = if Rake::Task.task_defined?(install_name)
+          Rake::Task[install_name]
         end
-      end
 
-      private
-
-      def scoped_task_name(task_name)
-        Rake.application.current_scope.path_with_task_name(task_name)
+        if needs_fetch
+          [clean, download, extract, install].compact.map(&:invoke)
+        end
       end
     end
   end

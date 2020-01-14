@@ -3,9 +3,9 @@ require 'spec_helper'
 describe RakeDependencies::Tasks::Ensure do
   include_context :rake
 
-  def define_task(name = nil, options = {}, &block)
-    ns = options[:namespace] || :dependency
-    additional_tasks = options[:additional_tasks] ||
+  def define_task(opts = {}, &block)
+    ns = opts[:namespace] || :dependency
+    additional_tasks = opts[:additional_tasks] ||
         [:clean, :download, :extract, :install]
 
     namespace ns do
@@ -13,8 +13,7 @@ describe RakeDependencies::Tasks::Ensure do
         task t
       end
 
-      subject.new(*(name ? [name] : [])) do |t|
-        t.dependency = 'some-dep'
+      subject.define({dependency: 'some-dep'}.merge(opts)) do |t|
         t.path = 'some/path'
         block.call(t) if block
       end
@@ -29,14 +28,15 @@ describe RakeDependencies::Tasks::Ensure do
     end
 
     it 'gives the ensure task a description' do
-      define_task { |t| t.dependency = 'the-thing' }
+      define_task(dependency: 'the-thing')
 
-      expect(rake.last_description).to(eq('Ensure the-thing present'))
+      expect(Rake::Task['dependency:ensure'].full_comment)
+          .to(eq('Ensure the-thing present'))
     end
 
     it 'allows multiple fetch tasks to be declared' do
-      define_task(nil, namespace: :dependency1)
-      define_task(nil, namespace: :dependency2)
+      define_task(namespace: :dependency1)
+      define_task(namespace: :dependency2)
 
       expect(Rake::Task['dependency1:ensure']).not_to be_nil
       expect(Rake::Task['dependency2:ensure']).not_to be_nil
@@ -45,15 +45,15 @@ describe RakeDependencies::Tasks::Ensure do
 
   context 'parameters' do
     it 'allows the task name to be overridden' do
-      define_task(:fetch_if_needed)
+      define_task(name: :fetch_if_needed)
 
       expect(Rake::Task['dependency:fetch_if_needed']).not_to be_nil
     end
 
     it 'allows the clean task to be overridden' do
-      define_task(nil,
-                  additional_tasks: [:tidy, :download, :extract, :install]) do |t|
-        t.clean_task = :tidy
+      define_task(
+          additional_tasks: [:tidy, :download, :extract, :install]) do |t|
+        t.clean_task_name = :tidy
         t.needs_fetch = lambda { |_| true }
       end
 
@@ -68,9 +68,8 @@ describe RakeDependencies::Tasks::Ensure do
     end
 
     it 'allows the download task to be overridden' do
-      define_task(nil,
-                  additional_tasks: [:clean, :dl, :extract, :install]) do |t|
-        t.download_task = :dl
+      define_task(additional_tasks: [:clean, :dl, :extract, :install]) do |t|
+        t.download_task_name = :dl
         t.needs_fetch = lambda { |_| true }
       end
 
@@ -85,11 +84,9 @@ describe RakeDependencies::Tasks::Ensure do
     end
 
     it 'allows the extract task to be overridden' do
-      define_task(nil,
-                  additional_tasks: [
-                      :clean, :download, :unarchive, :install
-                  ]) do |t|
-        t.extract_task = :unarchive
+      define_task(
+          additional_tasks: [:clean, :download, :unarchive, :install]) do |t|
+        t.extract_task_name = :unarchive
         t.needs_fetch = lambda { |_| true }
       end
 
@@ -104,9 +101,9 @@ describe RakeDependencies::Tasks::Ensure do
     end
 
     it 'allows the install task to be overridden' do
-      define_task(nil,
-                  additional_tasks: [:clean, :download, :extract, :copy]) do |t|
-        t.install_task = :copy
+      define_task(
+          additional_tasks: [:clean, :download, :extract, :copy]) do |t|
+        t.install_task_name = :copy
         t.needs_fetch = lambda { |_| true }
       end
 
@@ -121,8 +118,8 @@ describe RakeDependencies::Tasks::Ensure do
     end
 
     it 'does not invoke the install task if it is not defined' do
-      define_task(nil,
-                  additional_tasks: [:clean, :download, :extract]) do |t|
+      define_task(
+          additional_tasks: [:clean, :download, :extract]) do |t|
         t.needs_fetch = lambda { |_| true }
       end
 
@@ -137,7 +134,8 @@ describe RakeDependencies::Tasks::Ensure do
   end
 
   context 'when invoking the fetch required checker' do
-    it 'passes the path and default binary directory and version' do
+    it 'passes an object with the path and default binary directory and ' +
+        'version' do
       needs_fetch_checker = double('checker')
       define_task do |t|
         t.path = 'some/path'
@@ -145,11 +143,16 @@ describe RakeDependencies::Tasks::Ensure do
       end
 
       expect(needs_fetch_checker)
-          .to(receive(:call).with({
-              version: nil,
-              path: 'some/path',
-              binary_directory: 'bin'
-          }).and_return(false))
+          .to(receive(:arity).at_least(:once).and_return(1))
+      expect(needs_fetch_checker)
+          .to(receive(:call)
+              .at_least(:once)
+              .with(satisfy { |t|
+                t.version == nil &&
+                    t.path == 'some/path' &&
+                    t.binary_directory == 'bin'
+              })
+              .and_return(false))
 
       Rake::Task['dependency:ensure'].invoke
     end
@@ -163,11 +166,16 @@ describe RakeDependencies::Tasks::Ensure do
       end
 
       expect(needs_fetch_checker)
-          .to(receive(:call).with({
-              version: '0.1.0',
-              path: 'some/path',
-              binary_directory: 'bin'
-          }).and_return(false))
+          .to(receive(:arity).at_least(:once).and_return(1))
+      expect(needs_fetch_checker)
+          .to(receive(:call)
+              .at_least(:once)
+              .with(satisfy { |t|
+                t.version == '0.1.0' &&
+                    t.path == 'some/path' &&
+                    t.binary_directory == 'bin'
+              })
+              .and_return(false))
 
       Rake::Task['dependency:ensure'].invoke
     end
@@ -181,11 +189,16 @@ describe RakeDependencies::Tasks::Ensure do
       end
 
       expect(needs_fetch_checker)
-          .to(receive(:call).with({
-              version: nil,
-              path: 'some/path',
-              binary_directory: 'exe'
-          }).and_return(false))
+          .to(receive(:arity).at_least(:once).and_return(1))
+      expect(needs_fetch_checker)
+          .to(receive(:call)
+              .at_least(:once)
+              .with(satisfy { |t|
+                t.version == nil &&
+                    t.path == 'some/path' &&
+                    t.binary_directory == 'exe'
+              })
+              .and_return(false))
 
       Rake::Task['dependency:ensure'].invoke
     end

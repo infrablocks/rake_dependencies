@@ -4,9 +4,8 @@ require 'fileutils'
 describe RakeDependencies::Tasks::All do
   include_context :rake
 
-  def define_tasks(&block)
-    subject.new do |t|
-      t.namespace = :some_namespace
+  def define_tasks(opts = {}, &block)
+    subject.define({namespace: :some_namespace}.merge(opts)) do |t|
       t.dependency = 'super-cool-tool'
       t.version = '1.2.3'
       t.path = 'vendor/dependency'
@@ -33,9 +32,7 @@ describe RakeDependencies::Tasks::All do
   end
 
   it 'adds tasks in the provided namespace when supplied' do
-    define_tasks do |t|
-      t.namespace = :important_dependency
-    end
+    define_tasks(namespace: :important_dependency)
 
     expect(Rake::Task['important_dependency:clean']).not_to be_nil
     expect(Rake::Task['important_dependency:download']).not_to be_nil
@@ -48,9 +45,8 @@ describe RakeDependencies::Tasks::All do
   end
 
   it 'includes an install task in the provided namespace when installation ' +
-         'directory and namespace supplied' do
-    define_tasks do |t|
-      t.namespace = :important_dependency
+      'directory and namespace supplied' do
+    define_tasks(namespace: :important_dependency) do |t|
       t.installation_directory = 'some/important/directory'
     end
 
@@ -63,9 +59,7 @@ describe RakeDependencies::Tasks::All do
   end
 
   it 'adds tasks in the root namespace when none supplied' do
-    define_tasks do |t|
-      t.namespace = nil
-    end
+    define_tasks(namespace: nil)
 
     expect(Rake::Task['clean']).not_to be_nil
     expect(Rake::Task['download']).not_to be_nil
@@ -77,9 +71,8 @@ describe RakeDependencies::Tasks::All do
   end
 
   it 'includes an install task in the root namespace when installation ' +
-         'directory supplied and namespace not supplied' do
-    define_tasks do |t|
-      t.namespace = nil
+      'directory supplied and namespace not supplied' do
+    define_tasks(namespace: nil) do |t|
       t.installation_directory = 'some/important/directory'
     end
 
@@ -92,84 +85,62 @@ describe RakeDependencies::Tasks::All do
   end
 
   context 'clean task' do
+    it 'uses a name of clean by default' do
+      define_tasks
+
+      expect(Rake::Task.task_defined?("some_namespace:clean"))
+          .to(be(true))
+    end
+
+    it 'uses the provided name when supplied' do
+      define_tasks do |t|
+        t.clean_task_name = :clean_it_up
+      end
+
+      expect(Rake::Task.task_defined?("some_namespace:clean_it_up"))
+          .to(be(true))
+    end
+
     it 'configures with the provided dependency and path' do
       dependency = 'some-dependency'
       path = 'in/this/path'
-
-      clean_configurer = double_allowing(:dependency=, :path=, :name=)
-
-      namespace :some_namespace do
-        task :clean
-      end
-
-      expect(RakeDependencies::Tasks::Clean)
-          .to(receive(:new).and_yield(clean_configurer))
-      expect(clean_configurer).to(receive(:dependency=).with(dependency))
-      expect(clean_configurer).to(receive(:path=).with(path))
 
       define_tasks do |t|
         t.dependency = dependency
         t.path = path
       end
-    end
 
-    it 'uses a name of clean by default' do
-      clean_configurer = double_allowing(:dependency=, :path=, :name=)
+      clean_task = Rake::Task["some_namespace:clean"]
 
-      namespace :some_namespace do
-        task :clean
-      end
-
-      expect(RakeDependencies::Tasks::Clean)
-          .to(receive(:new).and_yield(clean_configurer))
-      expect(clean_configurer).to(receive(:name=).with(:clean))
-
-      define_tasks
-    end
-
-    it 'uses the provided name when supplied' do
-      clean_configurer = double_allowing(:dependency=, :path=, :name=)
-
-      namespace :some_namespace do
-        task :clean_it_up
-      end
-
-      expect(RakeDependencies::Tasks::Clean)
-          .to(receive(:new).and_yield(clean_configurer))
-      expect(clean_configurer).to(receive(:name=).with(:clean_it_up))
-
-      define_tasks do |t|
-        t.clean_task_name = :clean_it_up
-      end
+      expect(clean_task.creator.dependency).to(eq(dependency))
+      expect(clean_task.creator.path).to(eq(path))
     end
   end
 
   context 'download task' do
+    it 'uses a name of download by default' do
+      define_tasks
+
+      expect(Rake::Task.task_defined?("some_namespace:download"))
+          .to(be(true))
+    end
+
+    it 'uses the provided name when supplied' do
+      define_tasks do |t|
+        t.download_task_name = :download_it
+      end
+
+      expect(Rake::Task.task_defined?("some_namespace:download_it"))
+          .to(be(true))
+    end
+
     it 'configures with the provided dependency, path, type, version and ' +
-           'templates' do
+        'templates' do
       dependency = 'some-dependency'
       path = 'in/this/path'
       version = '1.2.3'
       uri_template = 'https://example.com/<%= @version %>'
       file_name_template = '<%= @version %>'
-
-      download_configurer = double_allowing(
-          :dependency=, :version=, :path=, :type=, :name=,
-          :uri_template=, :file_name_template=,
-          :os_ids=, :distribution_directory=)
-
-      namespace :some_namespace do
-        task :download
-      end
-
-      expect(RakeDependencies::Tasks::Download)
-          .to(receive(:new).and_yield(download_configurer))
-      expect(download_configurer).to(receive(:dependency=).with(dependency))
-      expect(download_configurer).to(receive(:version=).with(version))
-      expect(download_configurer).to(receive(:path=).with(path))
-      expect(download_configurer).to(receive(:uri_template=).with(uri_template))
-      expect(download_configurer).to(receive(:file_name_template=)
-                                         .with(file_name_template))
 
       define_tasks do |t|
         t.dependency = dependency
@@ -179,183 +150,102 @@ describe RakeDependencies::Tasks::All do
         t.uri_template = uri_template
         t.file_name_template = file_name_template
       end
+
+      download_task = Rake::Task["some_namespace:download"]
+
+      expect(download_task.creator.dependency).to(eq(dependency))
+      expect(download_task.creator.version).to(eq(version))
+      expect(download_task.creator.path).to(eq(path))
+      expect(download_task.creator.uri_template)
+          .to(eq(uri_template))
+      expect(download_task.creator.file_name_template)
+          .to(eq(file_name_template))
     end
 
     it 'passes the default os_ids when none supplied' do
-      download_configurer = double_allowing(
-          :dependency=, :version=, :path=, :type=, :name=,
-          :uri_template=, :file_name_template=,
-          :os_ids=, :distribution_directory=)
-
-      namespace :some_namespace do
-        task :download
-      end
-
-      expect(RakeDependencies::Tasks::Download)
-          .to(receive(:new).and_yield(download_configurer))
-      expect(download_configurer)
-          .to(receive(:os_ids=).with({mac: 'mac', linux: 'linux'}))
-
       define_tasks
+
+      download_task = Rake::Task["some_namespace:download"]
+
+      expect(download_task.creator.os_ids)
+          .to(eq({mac: 'mac', linux: 'linux'}))
     end
 
     it 'passes the provided os_ids when supplied' do
-      download_configurer = double_allowing(
-          :dependency=, :version=, :path=, :type=, :name=,
-          :uri_template=, :file_name_template=,
-          :os_ids=, :distribution_directory=)
-
-      namespace :some_namespace do
-        task :download
-      end
-
-      expect(RakeDependencies::Tasks::Download)
-          .to(receive(:new).and_yield(download_configurer))
-      expect(download_configurer)
-          .to(receive(:os_ids=).with({mac: 'darwin', linux: 'linux64'}))
-
       define_tasks do |t|
         t.os_ids = {mac: 'darwin', linux: 'linux64'}
       end
+
+      download_task = Rake::Task["some_namespace:download"]
+
+      expect(download_task.creator.os_ids)
+          .to(eq({mac: 'darwin', linux: 'linux64'}))
     end
 
     it 'passes the default distribution_directory when none supplied' do
-      download_configurer = double_allowing(
-          :dependency=, :version=, :path=, :type=, :name=,
-          :uri_template=, :file_name_template=,
-          :os_ids=, :distribution_directory=)
-
-      namespace :some_namespace do
-        task :download
-      end
-
-      expect(RakeDependencies::Tasks::Download)
-          .to(receive(:new).and_yield(download_configurer))
-      expect(download_configurer)
-          .to(receive(:distribution_directory=).with('dist'))
-
       define_tasks
+
+      download_task = Rake::Task["some_namespace:download"]
+
+      expect(download_task.creator.distribution_directory)
+          .to(eq('dist'))
     end
 
     it 'passes the provided distribution_directory when supplied' do
-      download_configurer = double_allowing(
-          :dependency=, :version=, :path=, :type=, :name=,
-          :uri_template=, :file_name_template=,
-          :os_ids=, :distribution_directory=)
-
-      namespace :some_namespace do
-        task :download
-      end
-
-      expect(RakeDependencies::Tasks::Download)
-          .to(receive(:new).and_yield(download_configurer))
-      expect(download_configurer)
-          .to(receive(:distribution_directory=).with('distributions'))
-
       define_tasks do |t|
         t.distribution_directory = 'distributions'
       end
+
+      download_task = Rake::Task["some_namespace:download"]
+
+      expect(download_task.creator.distribution_directory)
+          .to(eq('distributions'))
     end
 
     it 'uses a type of zip by default' do
-      download_configurer = double_allowing(
-          :dependency=, :version=, :path=, :type=, :name=,
-          :uri_template=, :file_name_template=,
-          :os_ids=, :distribution_directory=)
-
-      namespace :some_namespace do
-        task :download
-      end
-
-      expect(RakeDependencies::Tasks::Download)
-          .to(receive(:new).and_yield(download_configurer))
-      expect(download_configurer).to(receive(:type=).with(:zip))
-
       define_tasks
+
+      download_task = Rake::Task["some_namespace:download"]
+
+      expect(download_task.creator.type)
+          .to(eq(:zip))
     end
 
     it 'uses the provided type when supplied' do
-      download_configurer = double_allowing(
-          :dependency=, :version=, :path=, :type=, :name=,
-          :uri_template=, :file_name_template=,
-          :os_ids=, :distribution_directory=)
-
-      namespace :some_namespace do
-        task :download
-      end
-
-      expect(RakeDependencies::Tasks::Download)
-          .to(receive(:new).and_yield(download_configurer))
-      expect(download_configurer).to(receive(:type=).with(:tar_gz))
-
       define_tasks do |t|
         t.type = :tar_gz
       end
-    end
 
-    it 'uses a name of download by default' do
-      download_configurer = double_allowing(
-          :dependency=, :version=, :path=, :type=, :name=,
-          :uri_template=, :file_name_template=,
-          :os_ids=, :distribution_directory=)
+      download_task = Rake::Task["some_namespace:download"]
 
-      namespace :some_namespace do
-        task :download
-      end
-
-      expect(RakeDependencies::Tasks::Download)
-          .to(receive(:new).and_yield(download_configurer))
-      expect(download_configurer).to(receive(:name=).with(:download))
-
-      define_tasks
-    end
-
-    it 'uses the provided name when supplied' do
-      download_configurer = double_allowing(
-          :dependency=, :version=, :path=, :type=, :name=,
-          :uri_template=, :file_name_template=,
-          :os_ids=, :distribution_directory=)
-
-      namespace :some_namespace do
-        task :download_it
-      end
-
-      expect(RakeDependencies::Tasks::Download)
-          .to(receive(:new).and_yield(download_configurer))
-      expect(download_configurer).to(receive(:name=).with(:download_it))
-
-      define_tasks do |t|
-        t.download_task_name = :download_it
-      end
+      expect(download_task.creator.type)
+          .to(eq(:tar_gz))
     end
   end
 
   context 'extract task' do
+    it 'uses a name of download by default' do
+      define_tasks
+
+      expect(Rake::Task.task_defined?("some_namespace:extract"))
+          .to(be(true))
+    end
+
+    it 'uses the provided name when supplied' do
+      define_tasks do |t|
+        t.extract_task_name = :unarchive
+      end
+
+      expect(Rake::Task.task_defined?("some_namespace:unarchive"))
+          .to(be(true))
+    end
+
     it 'configures with the provided dependency, path, type, version and ' +
-           'template' do
+        'template' do
       dependency = 'some-dependency'
       path = 'in/this/path'
       version = '1.2.3'
       file_name_template = '<%= @version %>'
-
-      extract_configurer = double_allowing(
-          :dependency=, :version=, :path=, :type=, :name=,
-          :file_name_template=, :source_binary_name_template=,
-          :target_binary_name_template=, :os_ids=,
-          :distribution_directory=, :binary_directory=,
-          :strip_path_template=)
-
-      namespace :some_namespace do
-        task :extract
-      end
-
-      expect(RakeDependencies::Tasks::Extract)
-          .to(receive(:new).and_yield(extract_configurer))
-      expect(extract_configurer).to(receive(:dependency=).with(dependency))
-      expect(extract_configurer).to(receive(:version=).with(version))
-      expect(extract_configurer).to(receive(:path=).with(path))
-      expect(extract_configurer).to(receive(:file_name_template=)
-                                        .with(file_name_template))
 
       define_tasks do |t|
         t.dependency = dependency
@@ -364,322 +254,159 @@ describe RakeDependencies::Tasks::All do
 
         t.file_name_template = file_name_template
       end
+
+      extract_task = Rake::Task["some_namespace:extract"]
+
+      expect(extract_task.creator.dependency).to(eq(dependency))
+      expect(extract_task.creator.version).to(eq(version))
+      expect(extract_task.creator.path).to(eq(path))
+      expect(extract_task.creator.file_name_template)
+          .to(eq(file_name_template))
     end
 
     it 'passes the default os_ids when none supplied' do
-      extract_configurer = double_allowing(
-          :dependency=, :version=, :path=, :type=, :name=,
-          :file_name_template=, :source_binary_name_template=,
-          :target_binary_name_template=, :os_ids=,
-          :distribution_directory=, :binary_directory=,
-          :strip_path_template=)
-
-      namespace :some_namespace do
-        task :extract
-      end
-
-      expect(RakeDependencies::Tasks::Extract)
-          .to(receive(:new).and_yield(extract_configurer))
-      expect(extract_configurer)
-          .to(receive(:os_ids=).with({mac: 'mac', linux: 'linux'}))
-
       define_tasks
+
+      extract_task = Rake::Task["some_namespace:extract"]
+
+      expect(extract_task.creator.os_ids).to(eq({mac: 'mac', linux: 'linux'}))
     end
 
     it 'passes the provided os_ids when supplied' do
-      extract_configurer = double_allowing(
-          :dependency=, :version=, :path=, :type=, :name=,
-          :file_name_template=, :source_binary_name_template=,
-          :target_binary_name_template=, :os_ids=,
-          :distribution_directory=, :binary_directory=,
-          :strip_path_template=)
-
-      namespace :some_namespace do
-        task :extract
-      end
-
-      expect(RakeDependencies::Tasks::Extract)
-          .to(receive(:new).and_yield(extract_configurer))
-      expect(extract_configurer)
-          .to(receive(:os_ids=).with({mac: 'darwin', linux: 'linux64'}))
-
       define_tasks do |t|
         t.os_ids = {mac: 'darwin', linux: 'linux64'}
       end
+
+      extract_task = Rake::Task["some_namespace:extract"]
+
+      expect(extract_task.creator.os_ids)
+          .to(eq({mac: 'darwin', linux: 'linux64'}))
     end
 
     it 'passes the default distribution_directory when none supplied' do
-      extract_configurer = double_allowing(
-          :dependency=, :version=, :path=, :type=, :name=,
-          :file_name_template=, :source_binary_name_template=,
-          :target_binary_name_template=, :os_ids=,
-          :distribution_directory=, :binary_directory=,
-          :strip_path_template=)
-
-      namespace :some_namespace do
-        task :extract
-      end
-
-      expect(RakeDependencies::Tasks::Extract)
-          .to(receive(:new).and_yield(extract_configurer))
-      expect(extract_configurer)
-          .to(receive(:distribution_directory=).with('dist'))
-
       define_tasks
+
+      extract_task = Rake::Task["some_namespace:extract"]
+
+      expect(extract_task.creator.distribution_directory)
+          .to(eq('dist'))
     end
 
     it 'passes the provided distribution_directory when supplied' do
-      extract_configurer = double_allowing(
-          :dependency=, :version=, :path=, :type=, :name=,
-          :file_name_template=, :source_binary_name_template=,
-          :target_binary_name_template=, :os_ids=,
-          :distribution_directory=, :binary_directory=,
-          :strip_path_template=)
-
-      namespace :some_namespace do
-        task :extract
-      end
-
-      expect(RakeDependencies::Tasks::Extract)
-          .to(receive(:new).and_yield(extract_configurer))
-      expect(extract_configurer)
-          .to(receive(:distribution_directory=).with('distributions'))
-
       define_tasks do |t|
         t.distribution_directory = 'distributions'
       end
+
+      extract_task = Rake::Task["some_namespace:extract"]
+
+      expect(extract_task.creator.distribution_directory)
+          .to(eq('distributions'))
     end
 
     it 'passes the default binary_directory when none supplied' do
-      extract_configurer = double_allowing(
-          :dependency=, :version=, :path=, :type=, :name=,
-          :file_name_template=, :source_binary_name_template=,
-          :target_binary_name_template=, :os_ids=,
-          :distribution_directory=, :binary_directory=,
-          :strip_path_template=)
-
-      namespace :some_namespace do
-        task :extract
-      end
-
-      expect(RakeDependencies::Tasks::Extract)
-          .to(receive(:new).and_yield(extract_configurer))
-      expect(extract_configurer)
-          .to(receive(:binary_directory=).with('bin'))
-
       define_tasks
+
+      extract_task = Rake::Task["some_namespace:extract"]
+
+      expect(extract_task.creator.binary_directory)
+          .to(eq('bin'))
     end
 
     it 'passes the provided binary_directory when supplied' do
-      extract_configurer = double_allowing(
-          :dependency=, :version=, :path=, :type=, :name=,
-          :file_name_template=, :source_binary_name_template=,
-          :target_binary_name_template=, :os_ids=,
-          :distribution_directory=, :binary_directory=,
-          :strip_path_template=)
-
-      namespace :some_namespace do
-        task :extract
-      end
-
-      expect(RakeDependencies::Tasks::Extract)
-          .to(receive(:new).and_yield(extract_configurer))
-      expect(extract_configurer)
-          .to(receive(:binary_directory=).with('exe'))
-
       define_tasks do |t|
         t.binary_directory = 'exe'
       end
+
+      extract_task = Rake::Task["some_namespace:extract"]
+
+      expect(extract_task.creator.binary_directory)
+          .to(eq('exe'))
     end
 
     it 'passes a nil strip path template when none supplied' do
-      extract_configurer = double_allowing(
-          :dependency=, :version=, :path=, :type=, :name=,
-          :file_name_template=, :source_binary_name_template=,
-          :target_binary_name_template=, :os_ids=,
-          :distribution_directory=, :binary_directory=,
-          :strip_path_template=)
-
-      namespace :some_namespace do
-        task :extract
-      end
-
-      expect(RakeDependencies::Tasks::Extract)
-          .to(receive(:new).and_yield(extract_configurer))
-      expect(extract_configurer)
-          .to(receive(:strip_path_template=).with(nil))
-
       define_tasks
+
+      extract_task = Rake::Task["some_namespace:extract"]
+
+      expect(extract_task.creator.strip_path_template)
+          .to(be_nil)
     end
 
     it 'passes the provided strip path template when supplied' do
-      extract_configurer = double_allowing(
-          :dependency=, :version=, :path=, :type=, :name=,
-          :file_name_template=, :source_binary_name_template=,
-          :target_binary_name_template=, :os_ids=,
-          :distribution_directory=, :binary_directory=,
-          :strip_path_template=)
-
-      namespace :some_namespace do
-        task :extract
-      end
-
-      expect(RakeDependencies::Tasks::Extract)
-          .to(receive(:new).and_yield(extract_configurer))
-      expect(extract_configurer)
-          .to(receive(:strip_path_template=).with('<%= @version %>'))
-
       define_tasks do |t|
         t.strip_path_template = '<%= @version %>'
       end
+
+      extract_task = Rake::Task["some_namespace:extract"]
+
+      expect(extract_task.creator.strip_path_template)
+          .to(eq('<%= @version %>'))
     end
 
     it 'passes a nil target binary name template when none supplied' do
-      extract_configurer = double_allowing(
-          :dependency=, :version=, :path=, :type=, :name=,
-          :file_name_template=, :source_binary_name_template=,
-          :target_binary_name_template=, :os_ids=,
-          :distribution_directory=, :binary_directory=,
-          :strip_path_template=)
-
-      namespace :some_namespace do
-        task :extract
-      end
-
-      expect(RakeDependencies::Tasks::Extract)
-          .to(receive(:new).and_yield(extract_configurer))
-      expect(extract_configurer)
-          .to(receive(:target_binary_name_template=).with(nil))
-
       define_tasks
+
+      extract_task = Rake::Task["some_namespace:extract"]
+
+      expect(extract_task.creator.target_binary_name_template)
+          .to(be_nil)
     end
 
     it 'passes the provided target binary name template when supplied' do
-      extract_configurer = double_allowing(
-          :dependency=, :version=, :path=, :type=, :name=,
-          :file_name_template=, :source_binary_name_template=,
-          :target_binary_name_template=, :os_ids=,
-          :distribution_directory=, :binary_directory=,
-          :strip_path_template=)
-
-      namespace :some_namespace do
-        task :extract
-      end
-
-      expect(RakeDependencies::Tasks::Extract)
-          .to(receive(:new).and_yield(extract_configurer))
-      expect(extract_configurer)
-          .to(receive(:target_binary_name_template=)
-                  .with('binary-<%= @version %>'))
-
       define_tasks do |t|
         t.target_binary_name_template = 'binary-<%= @version %>'
       end
+
+      extract_task = Rake::Task["some_namespace:extract"]
+
+      expect(extract_task.creator.target_binary_name_template)
+          .to(eq('binary-<%= @version %>'))
     end
 
     it 'uses a type of zip by default' do
-      extract_configurer = double_allowing(
-          :dependency=, :version=, :path=, :type=, :name=,
-          :file_name_template=, :source_binary_name_template=,
-          :target_binary_name_template=, :os_ids=,
-          :distribution_directory=, :binary_directory=,
-          :strip_path_template=)
-
-      namespace :some_namespace do
-        task :extract
-      end
-
-      expect(RakeDependencies::Tasks::Extract)
-          .to(receive(:new).and_yield(extract_configurer))
-      expect(extract_configurer).to(receive(:type=).with(:zip))
-
       define_tasks
+
+      extract_task = Rake::Task["some_namespace:extract"]
+
+      expect(extract_task.creator.type)
+          .to(eq(:zip))
     end
 
     it 'uses the provided type when supplied' do
-      extract_configurer = double_allowing(
-          :dependency=, :version=, :path=, :type=, :name=,
-          :file_name_template=, :source_binary_name_template=,
-          :target_binary_name_template=, :os_ids=,
-          :distribution_directory=, :binary_directory=,
-          :strip_path_template=)
-
-      namespace :some_namespace do
-        task :extract
-      end
-
-      expect(RakeDependencies::Tasks::Extract)
-          .to(receive(:new).and_yield(extract_configurer))
-      expect(extract_configurer).to(receive(:type=).with(:tar_gz))
-
       define_tasks do |t|
         t.type = :tar_gz
       end
-    end
 
-    it 'uses a name of download by default' do
-      extract_configurer = double_allowing(
-          :dependency=, :version=, :path=, :type=, :name=,
-          :file_name_template=, :source_binary_name_template=,
-          :target_binary_name_template=, :os_ids=,
-          :distribution_directory=, :binary_directory=,
-          :strip_path_template=)
+      extract_task = Rake::Task["some_namespace:extract"]
 
-      namespace :some_namespace do
-        task :extract
-      end
-
-      expect(RakeDependencies::Tasks::Extract)
-          .to(receive(:new).and_yield(extract_configurer))
-      expect(extract_configurer).to(receive(:name=).with(:extract))
-
-      define_tasks
-    end
-
-    it 'uses the provided name when supplied' do
-      extract_configurer = double_allowing(
-          :dependency=, :version=, :path=, :type=, :name=,
-          :file_name_template=, :source_binary_name_template=,
-          :target_binary_name_template=, :os_ids=,
-          :distribution_directory=, :binary_directory=,
-          :strip_path_template=)
-
-      namespace :some_namespace do
-        task :unarchive
-      end
-
-      expect(RakeDependencies::Tasks::Extract)
-          .to(receive(:new).and_yield(extract_configurer))
-      expect(extract_configurer).to(receive(:name=).with(:unarchive))
-
-      define_tasks do |t|
-        t.extract_task_name = :unarchive
-      end
+      expect(extract_task.creator.type)
+          .to(eq(:tar_gz))
     end
   end
 
   context 'install task' do
+    it 'uses a name of install by default' do
+      define_tasks do |t|
+        t.installation_directory = 'some/important/directory'
+      end
+
+      expect(Rake::Task.task_defined?("some_namespace:install"))
+    end
+
+    it 'uses the provided name when supplied' do
+      define_tasks do |t|
+        t.installation_directory = 'some/important/directory'
+        t.install_task_name = :copy
+      end
+
+      expect(Rake::Task.task_defined?("some_namespace:copy"))
+    end
+
     it 'configures with the provided dependency, path, version and template' do
       dependency = 'some-dependency'
       path = 'in/this/path'
       version = '1.2.3'
       target_binary_name_template = 'some-binary'
-
-      install_configurer = double_allowing(
-          :name=, :os_ids=, :dependency=, :version=, :path=, :type=,
-          :binary_directory=, :binary_name_template=, :installation_directory=)
-
-      namespace :some_namespace do
-        task :install
-      end
-
-      expect(RakeDependencies::Tasks::Install)
-          .to(receive(:new).and_yield(install_configurer))
-      expect(install_configurer).to(receive(:dependency=).with(dependency))
-      expect(install_configurer).to(receive(:version=).with(version))
-      expect(install_configurer).to(receive(:path=).with(path))
-      expect(install_configurer).to(receive(:binary_name_template=)
-                                        .with(target_binary_name_template))
 
       define_tasks do |t|
         t.dependency = dependency
@@ -690,343 +417,208 @@ describe RakeDependencies::Tasks::All do
 
         t.target_binary_name_template = target_binary_name_template
       end
+
+      install_task = Rake::Task["some_namespace:install"]
+      install_task.creator.invoke_configuration_block({})
+
+      expect(install_task.creator.dependency).to(eq(dependency))
+      expect(install_task.creator.version).to(eq(version))
+      expect(install_task.creator.path).to(eq(path))
+      expect(install_task.creator.binary_name_template)
+          .to(eq(target_binary_name_template))
     end
 
     it 'passes the default os_ids when none supplied' do
-      install_configurer = double_allowing(
-          :name=, :os_ids=, :dependency=, :version=, :path=, :type=,
-          :binary_directory=, :binary_name_template=, :installation_directory=)
-
-      namespace :some_namespace do
-        task :install
-      end
-
-      expect(RakeDependencies::Tasks::Install)
-          .to(receive(:new).and_yield(install_configurer))
-      expect(install_configurer)
-          .to(receive(:os_ids=).with({mac: 'mac', linux: 'linux'}))
-
       define_tasks do |t|
         t.installation_directory = 'some/important/directory'
       end
+
+      install_task = Rake::Task["some_namespace:install"]
+
+      expect(install_task.creator.os_ids)
+          .to(eq({mac: 'mac', linux: 'linux'}))
     end
 
     it 'passes the provided os_ids when supplied' do
-      install_configurer = double_allowing(
-          :name=, :os_ids=, :dependency=, :version=, :path=, :type=,
-          :binary_directory=, :binary_name_template=, :installation_directory=)
-
-      namespace :some_namespace do
-        task :install
-      end
-
-      expect(RakeDependencies::Tasks::Install)
-          .to(receive(:new).and_yield(install_configurer))
-      expect(install_configurer)
-          .to(receive(:os_ids=).with({mac: 'darwin', linux: 'linux64'}))
-
       define_tasks do |t|
         t.installation_directory = 'some/important/directory'
         t.os_ids = {mac: 'darwin', linux: 'linux64'}
       end
+
+      install_task = Rake::Task["some_namespace:install"]
+
+      expect(install_task.creator.os_ids)
+          .to(eq({mac: 'darwin', linux: 'linux64'}))
     end
 
     it 'passes the default binary_directory when none supplied' do
-      install_configurer = double_allowing(
-          :name=, :os_ids=, :dependency=, :version=, :path=, :type=,
-          :binary_directory=, :binary_name_template=, :installation_directory=)
-
-      namespace :some_namespace do
-        task :install
-      end
-
-      expect(RakeDependencies::Tasks::Install)
-          .to(receive(:new).and_yield(install_configurer))
-      expect(install_configurer)
-          .to(receive(:binary_directory=).with('bin'))
-
       define_tasks do |t|
         t.installation_directory = 'some/important/directory'
       end
+
+      install_task = Rake::Task["some_namespace:install"]
+
+      expect(install_task.creator.binary_directory)
+          .to(eq('bin'))
     end
 
     it 'passes the provided binary_directory when supplied' do
-      install_configurer = double_allowing(
-          :name=, :os_ids=, :dependency=, :version=, :path=, :type=,
-          :binary_directory=, :binary_name_template=, :installation_directory=)
-
-      namespace :some_namespace do
-        task :install
-      end
-
-      expect(RakeDependencies::Tasks::Install)
-          .to(receive(:new).and_yield(install_configurer))
-      expect(install_configurer)
-          .to(receive(:binary_directory=).with('exe'))
-
       define_tasks do |t|
         t.installation_directory = 'some/important/directory'
         t.binary_directory = 'exe'
       end
+
+      install_task = Rake::Task["some_namespace:install"]
+
+      expect(install_task.creator.binary_directory)
+          .to(eq('exe'))
     end
 
     it 'passes the dependency name as binary name template when no target ' +
-           'name template supplied' do
-      install_configurer = double_allowing(
-          :name=, :os_ids=, :dependency=, :version=, :path=, :type=,
-          :binary_directory=, :binary_name_template=, :installation_directory=)
-
-      namespace :some_namespace do
-        task :install
-      end
-
-      expect(RakeDependencies::Tasks::Install)
-          .to(receive(:new).and_yield(install_configurer))
-      expect(install_configurer)
-          .to(receive(:binary_name_template=).with('some-dependency'))
-
+        'name template supplied' do
       define_tasks do |t|
         t.installation_directory = 'some/important/directory'
         t.dependency = 'some-dependency'
       end
+
+      install_task = Rake::Task["some_namespace:install"]
+      install_task.creator.invoke_configuration_block({})
+
+      expect(install_task.creator.binary_name_template)
+          .to(eq('some-dependency'))
     end
 
     it 'passes the target binary name template as binary name template when ' +
-           'supplied' do
-      install_configurer = double_allowing(
-          :name=, :os_ids=, :dependency=, :version=, :path=, :type=,
-          :binary_directory=, :binary_name_template=, :installation_directory=)
-
-      namespace :some_namespace do
-        task :install
-      end
-
-      expect(RakeDependencies::Tasks::Install)
-          .to(receive(:new).and_yield(install_configurer))
-      expect(install_configurer)
-          .to(receive(:binary_name_template=).with('binary-<%= @version %>'))
-
+        'supplied' do
       define_tasks do |t|
         t.installation_directory = 'some/important/directory'
         t.target_binary_name_template = 'binary-<%= @version %>'
       end
+
+      install_task = Rake::Task["some_namespace:install"]
+      install_task.creator.invoke_configuration_block({})
+
+      expect(install_task.creator.binary_name_template)
+          .to(eq('binary-<%= @version %>'))
     end
 
     it 'uses a type of zip by default' do
-      install_configurer = double_allowing(
-          :name=, :os_ids=, :dependency=, :version=, :path=, :type=,
-          :binary_directory=, :binary_name_template=, :installation_directory=)
-
-      namespace :some_namespace do
-        task :install
-      end
-
-      expect(RakeDependencies::Tasks::Install)
-          .to(receive(:new).and_yield(install_configurer))
-      expect(install_configurer).to(receive(:type=).with(:zip))
-
       define_tasks do |t|
         t.installation_directory = 'some/important/directory'
       end
+
+      install_task = Rake::Task["some_namespace:install"]
+
+      expect(install_task.creator.type)
+          .to(eq(:zip))
     end
 
     it 'uses the provided type when supplied' do
-      install_configurer = double_allowing(
-          :name=, :os_ids=, :dependency=, :version=, :path=, :type=,
-          :binary_directory=, :binary_name_template=, :installation_directory=)
-
-      namespace :some_namespace do
-        task :install
-      end
-
-      expect(RakeDependencies::Tasks::Install)
-          .to(receive(:new).and_yield(install_configurer))
-      expect(install_configurer).to(receive(:type=).with(:tar_gz))
-
       define_tasks do |t|
         t.installation_directory = 'some/important/directory'
         t.type = :tar_gz
       end
-    end
 
-    it 'uses a name of install by default' do
-      install_configurer = double_allowing(
-          :name=, :os_ids=, :dependency=, :version=, :path=, :type=,
-          :binary_directory=, :binary_name_template=, :installation_directory=)
+      install_task = Rake::Task["some_namespace:install"]
 
-      namespace :some_namespace do
-        task :install
-      end
-
-      expect(RakeDependencies::Tasks::Install)
-          .to(receive(:new).and_yield(install_configurer))
-      expect(install_configurer).to(receive(:name=).with(:install))
-
-      define_tasks do |t|
-        t.installation_directory = 'some/important/directory'
-      end
-    end
-
-    it 'uses the provided name when supplied' do
-      install_configurer = double_allowing(
-          :name=, :os_ids=, :dependency=, :version=, :path=, :type=,
-          :binary_directory=, :binary_name_template=, :installation_directory=)
-
-      namespace :some_namespace do
-        task :unarchive
-      end
-
-      expect(RakeDependencies::Tasks::Install)
-          .to(receive(:new).and_yield(install_configurer))
-      expect(install_configurer).to(receive(:name=).with(:copy))
-
-      define_tasks do |t|
-        t.installation_directory = 'some/important/directory'
-        t.install_task_name = :copy
-      end
+      expect(install_task.creator.type)
+          .to(eq(:tar_gz))
     end
   end
 
   context 'fetch task' do
-    it 'configures with the provided dependency' do
-      dependency = 'some-dependency'
+    it 'uses a name of fetch by default' do
+      define_tasks
 
-      fetch_configurer = double_allowing(
-          :dependency=, :name=, :download_task=, :extract_task=)
+      expect(Rake::Task.task_defined?("some_namespace:fetch"))
+          .to(eq(true))
+    end
 
-      namespace :some_namespace do
-        task :fetch
+    it 'uses the provided name when supplied' do
+      define_tasks do |t|
+        t.fetch_task_name = :get_it
       end
 
-      expect(RakeDependencies::Tasks::Fetch)
-          .to(receive(:new).and_yield(fetch_configurer))
-      expect(fetch_configurer).to(receive(:dependency=).with(dependency))
+      expect(Rake::Task.task_defined?("some_namespace:get_it"))
+          .to(eq(true))
+    end
+
+    it 'configures with the provided dependency' do
+      dependency = 'some-dependency'
 
       define_tasks do |t|
         t.dependency = dependency
       end
-    end
 
-    it 'uses a name of fetch by default' do
-      fetch_configurer = double_allowing(
-          :dependency=, :name=, :download_task=, :extract_task=)
+      fetch_task = Rake::Task["some_namespace:fetch"]
 
-      namespace :some_namespace do
-        task :fetch
-      end
-
-      expect(RakeDependencies::Tasks::Fetch)
-          .to(receive(:new).and_yield(fetch_configurer))
-      expect(fetch_configurer).to(receive(:name=).with(:fetch))
-
-      define_tasks
-    end
-
-    it 'uses the provided name when supplied' do
-      fetch_configurer = double_allowing(
-          :dependency=, :name=, :download_task=, :extract_task=)
-
-      namespace :some_namespace do
-        task :get_it
-      end
-
-      expect(RakeDependencies::Tasks::Fetch)
-          .to(receive(:new).and_yield(fetch_configurer))
-      expect(fetch_configurer).to(receive(:name=).with(:get_it))
-
-      define_tasks do |t|
-        t.fetch_task_name = :get_it
-      end
+      expect(fetch_task.creator.dependency).to(eq(dependency))
     end
 
     it 'uses a download task name of download by default' do
-      fetch_configurer = double_allowing(
-          :dependency=, :name=, :download_task=, :extract_task=)
-
-      namespace :some_namespace do
-        task :fetch
-      end
-
-      expect(RakeDependencies::Tasks::Fetch)
-          .to(receive(:new).and_yield(fetch_configurer))
-      expect(fetch_configurer).to(receive(:download_task=).with(:download))
-
       define_tasks
+
+      fetch_task = Rake::Task["some_namespace:fetch"]
+
+      expect(fetch_task.creator.download_task_name)
+          .to(eq(:download))
     end
 
     it 'uses the provided download task name when supplied' do
-      fetch_configurer = double_allowing(
-          :dependency=, :name=, :download_task=, :extract_task=)
-
-      namespace :some_namespace do
-        task :fetch
-      end
-
-      expect(RakeDependencies::Tasks::Fetch)
-          .to(receive(:new).and_yield(fetch_configurer))
-      expect(fetch_configurer).to(receive(:download_task=).with(:download_it))
-
       define_tasks do |t|
         t.download_task_name = :download_it
       end
+
+      fetch_task = Rake::Task["some_namespace:fetch"]
+
+      expect(fetch_task.creator.download_task_name)
+          .to(eq(:download_it))
     end
 
     it 'uses an extract task name of extract by default' do
-      fetch_configurer = double_allowing(
-          :dependency=, :name=, :download_task=, :extract_task=)
-
-      namespace :some_namespace do
-        task :fetch
-      end
-
-      expect(RakeDependencies::Tasks::Fetch)
-          .to(receive(:new).and_yield(fetch_configurer))
-      expect(fetch_configurer).to(receive(:extract_task=).with(:extract))
-
       define_tasks
+
+      fetch_task = Rake::Task["some_namespace:fetch"]
+
+      expect(fetch_task.creator.extract_task_name)
+          .to(eq(:extract))
     end
 
     it 'uses the provided extract task name when supplied' do
-      fetch_configurer = double_allowing(
-          :dependency=, :name=, :download_task=, :extract_task=)
-
-      namespace :some_namespace do
-        task :fetch
-      end
-
-      expect(RakeDependencies::Tasks::Fetch)
-          .to(receive(:new).and_yield(fetch_configurer))
-      expect(fetch_configurer).to(receive(:extract_task=).with(:unarchive))
-
       define_tasks do |t|
         t.extract_task_name = :unarchive
       end
+
+      fetch_task = Rake::Task["some_namespace:fetch"]
+
+      expect(fetch_task.creator.extract_task_name)
+          .to(eq(:unarchive))
     end
   end
 
   context 'ensure task' do
+    it 'uses a name of ensure by default' do
+      define_tasks
+
+      expect(Rake::Task.task_defined?("some_namespace:ensure"))
+    end
+
+    it 'uses the provided name when supplied' do
+      define_tasks do |t|
+        t.ensure_task_name = :ensure_it
+      end
+
+      define_tasks
+
+      expect(Rake::Task.task_defined?("some_namespace:ensure_it"))
+    end
+
     it 'configures with the provided dependency, version, path and ' +
-           'needs_fetch callback' do
+        'needs_fetch callback' do
       dependency = 'some-dependency'
       version = '1.2.3'
       path = 'in/this/path'
       needs_fetch = lambda { |_| true }
-
-      ensure_configurer = double_allowing(
-          :dependency=, :path=, :version=, :needs_fetch=,
-          :clean_task=, :download_task=, :extract_task=, :install_task=,
-          :name=, :binary_directory=)
-
-      namespace :some_namespace do
-        task :ensure
-      end
-
-      expect(RakeDependencies::Tasks::Ensure)
-          .to(receive(:new).and_yield(ensure_configurer))
-      expect(ensure_configurer).to(receive(:dependency=).with(dependency))
-      expect(ensure_configurer).to(receive(:version=).with(version))
-      expect(ensure_configurer).to(receive(:path=).with(path))
-      expect(ensure_configurer).to(receive(:needs_fetch=).with(needs_fetch))
 
       define_tasks do |t|
         t.dependency = dependency
@@ -1034,224 +626,113 @@ describe RakeDependencies::Tasks::All do
         t.path = path
         t.needs_fetch = needs_fetch
       end
-    end
 
-    it 'uses a name of ensure by default' do
-      ensure_configurer = double_allowing(
-          :dependency=, :path=, :version=, :needs_fetch=,
-          :clean_task=, :download_task=, :extract_task=, :install_task=,
-          :name=, :binary_directory=)
+      ensure_task = Rake::Task["some_namespace:ensure"]
 
-      namespace :some_namespace do
-        task :ensure
-      end
-
-      expect(RakeDependencies::Tasks::Ensure)
-          .to(receive(:new).and_yield(ensure_configurer))
-      expect(ensure_configurer).to(receive(:name=).with(:ensure))
-
-      define_tasks
-    end
-
-    it 'uses the provided name when supplied' do
-      ensure_configurer = double_allowing(
-          :dependency=, :path=, :version=, :needs_fetch=,
-          :clean_task=, :download_task=, :extract_task=, :install_task=,
-          :name=, :binary_directory=)
-
-      namespace :some_namespace do
-        task :ensure_it
-      end
-
-      expect(RakeDependencies::Tasks::Ensure)
-          .to(receive(:new).and_yield(ensure_configurer))
-      expect(ensure_configurer).to(receive(:name=).with(:ensure_it))
-
-      define_tasks do |t|
-        t.ensure_task_name = :ensure_it
-      end
+      expect(ensure_task.creator.dependency).to(eq(dependency))
+      expect(ensure_task.creator.version).to(eq(version))
+      expect(ensure_task.creator.path).to(eq(path))
+      expect(ensure_task.creator.needs_fetch).to(eq(true))
     end
 
     it 'passes the default binary_directory when none supplied' do
-      ensure_configurer = double_allowing(
-          :dependency=, :path=, :version=, :needs_fetch=,
-          :clean_task=, :download_task=, :extract_task=, :install_task=,
-          :name=, :binary_directory=)
-
-      namespace :some_namespace do
-        task :ensure
-      end
-
-      expect(RakeDependencies::Tasks::Ensure)
-          .to(receive(:new).and_yield(ensure_configurer))
-      expect(ensure_configurer)
-          .to(receive(:binary_directory=).with('bin'))
-
       define_tasks
+
+      ensure_task = Rake::Task["some_namespace:ensure"]
+
+      expect(ensure_task.creator.binary_directory)
+          .to(eq('bin'))
     end
 
     it 'passes the provided binary_directory when supplied' do
-      ensure_configurer = double_allowing(
-          :dependency=, :path=, :version=, :needs_fetch=,
-          :clean_task=, :download_task=, :extract_task=, :install_task=,
-          :name=, :binary_directory=)
-
-      namespace :some_namespace do
-        task :ensure
-      end
-
-      expect(RakeDependencies::Tasks::Ensure)
-          .to(receive(:new).and_yield(ensure_configurer))
-      expect(ensure_configurer)
-          .to(receive(:binary_directory=).with('exe'))
-
       define_tasks do |t|
         t.binary_directory = 'exe'
       end
+
+      ensure_task = Rake::Task["some_namespace:ensure"]
+
+      expect(ensure_task.creator.binary_directory)
+          .to(eq('exe'))
     end
 
     it 'uses a clean task name of clean by default' do
-      ensure_configurer = double_allowing(
-          :dependency=, :path=, :version=, :needs_fetch=,
-          :clean_task=, :download_task=, :extract_task=, :install_task=,
-          :name=, :binary_directory=)
-
-      namespace :some_namespace do
-        task :ensure
-      end
-
-      expect(RakeDependencies::Tasks::Ensure)
-          .to(receive(:new).and_yield(ensure_configurer))
-      expect(ensure_configurer).to(receive(:clean_task=).with(:clean))
-
       define_tasks
+
+      ensure_task = Rake::Task["some_namespace:ensure"]
+
+      expect(ensure_task.creator.clean_task_name)
+          .to(eq(:clean))
     end
 
     it 'uses the provided clean task name when supplied' do
-      ensure_configurer = double_allowing(
-          :dependency=, :path=, :version=, :needs_fetch=,
-          :clean_task=, :download_task=, :extract_task=, :install_task=,
-          :name=, :binary_directory=)
-
-      namespace :some_namespace do
-        task :ensure
-      end
-
-      expect(RakeDependencies::Tasks::Ensure)
-          .to(receive(:new).and_yield(ensure_configurer))
-      expect(ensure_configurer).to(receive(:clean_task=).with(:clean_it))
-
       define_tasks do |t|
         t.clean_task_name = :clean_it
       end
+
+      ensure_task = Rake::Task["some_namespace:ensure"]
+
+      expect(ensure_task.creator.clean_task_name)
+          .to(eq(:clean_it))
     end
 
     it 'uses a download task name of download by default' do
-      ensure_configurer = double_allowing(
-          :dependency=, :path=, :version=, :needs_fetch=,
-          :clean_task=, :download_task=, :extract_task=, :install_task=,
-          :name=, :binary_directory=)
-
-      namespace :some_namespace do
-        task :ensure
-      end
-
-      expect(RakeDependencies::Tasks::Ensure)
-          .to(receive(:new).and_yield(ensure_configurer))
-      expect(ensure_configurer).to(receive(:download_task=).with(:download))
-
       define_tasks
+
+      ensure_task = Rake::Task["some_namespace:ensure"]
+
+      expect(ensure_task.creator.download_task_name)
+          .to(eq(:download))
     end
 
     it 'uses the provided download task name when supplied' do
-      ensure_configurer = double_allowing(
-          :dependency=, :path=, :version=, :needs_fetch=,
-          :clean_task=, :download_task=, :extract_task=, :install_task=,
-          :name=, :binary_directory=)
-
-      namespace :some_namespace do
-        task :ensure
-      end
-
-      expect(RakeDependencies::Tasks::Ensure)
-          .to(receive(:new).and_yield(ensure_configurer))
-      expect(ensure_configurer).to(receive(:download_task=).with(:download_it))
-
       define_tasks do |t|
         t.download_task_name = :download_it
       end
+
+      ensure_task = Rake::Task["some_namespace:ensure"]
+
+      expect(ensure_task.creator.download_task_name)
+          .to(eq(:download_it))
     end
 
     it 'uses an extract task name of extract by default' do
-      ensure_configurer = double_allowing(
-          :dependency=, :path=, :version=, :needs_fetch=,
-          :clean_task=, :download_task=, :extract_task=, :install_task=,
-          :name=, :binary_directory=)
-
-      namespace :some_namespace do
-        task :ensure
-      end
-
-      expect(RakeDependencies::Tasks::Ensure)
-          .to(receive(:new).and_yield(ensure_configurer))
-      expect(ensure_configurer).to(receive(:extract_task=).with(:extract))
-
       define_tasks
+
+      ensure_task = Rake::Task["some_namespace:ensure"]
+
+      expect(ensure_task.creator.extract_task_name)
+          .to(eq(:extract))
     end
 
     it 'uses the provided extract task name when supplied' do
-      ensure_configurer = double_allowing(
-          :dependency=, :path=, :version=, :needs_fetch=,
-          :clean_task=, :download_task=, :extract_task=, :install_task=,
-          :name=, :binary_directory=)
-
-      namespace :some_namespace do
-        task :ensure
-      end
-
-      expect(RakeDependencies::Tasks::Ensure)
-          .to(receive(:new).and_yield(ensure_configurer))
-      expect(ensure_configurer).to(receive(:extract_task=).with(:unarchive))
-
       define_tasks do |t|
         t.extract_task_name = :unarchive
       end
+
+      ensure_task = Rake::Task["some_namespace:ensure"]
+
+      expect(ensure_task.creator.extract_task_name)
+          .to(eq(:unarchive))
     end
 
     it 'uses an install task name of install by default' do
-      ensure_configurer = double_allowing(
-          :dependency=, :path=, :version=, :needs_fetch=,
-          :clean_task=, :download_task=, :extract_task=, :install_task=,
-          :name=, :binary_directory=)
-
-      namespace :some_namespace do
-        task :ensure
-      end
-
-      expect(RakeDependencies::Tasks::Ensure)
-          .to(receive(:new).and_yield(ensure_configurer))
-      expect(ensure_configurer).to(receive(:install_task=).with(:install))
-
       define_tasks
+
+      ensure_task = Rake::Task["some_namespace:ensure"]
+
+      expect(ensure_task.creator.install_task_name)
+          .to(eq(:install))
     end
 
     it 'uses the provided install task name when supplied' do
-      ensure_configurer = double_allowing(
-          :dependency=, :path=, :version=, :needs_fetch=,
-          :clean_task=, :download_task=, :extract_task=, :install_task=,
-          :name=, :binary_directory=)
-
-      namespace :some_namespace do
-        task :ensure
-      end
-
-      expect(RakeDependencies::Tasks::Ensure)
-          .to(receive(:new).and_yield(ensure_configurer))
-      expect(ensure_configurer).to(receive(:install_task=).with(:copy))
-
       define_tasks do |t|
         t.install_task_name = :copy
       end
+
+      ensure_task = Rake::Task["some_namespace:ensure"]
+
+      expect(ensure_task.creator.install_task_name)
+          .to(eq(:copy))
     end
   end
 end

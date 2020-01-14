@@ -1,11 +1,13 @@
+require 'rake_factory'
 require 'open-uri'
-require_relative '../tasklib'
+
 require_relative '../template'
 
 module RakeDependencies
   module Tasks
-    class Download < TaskLib
-      parameter :name, default: :download
+    class Download < RakeFactory::Task
+      default_name :download
+      default_description ->(t) { "Download #{t.dependency} distribution" }
 
       parameter :type, default: :zip
       parameter :os_ids, default: {mac: 'mac', linux: 'linux'}
@@ -18,35 +20,27 @@ module RakeDependencies
       parameter :uri_template, required: true
       parameter :file_name_template, required: true
 
-      def process_arguments(args)
-        super(args)
-        self.name = args[0] if args[0]
-      end
+      action do
+        parameters = {
+            version: version,
+            platform: platform,
+            os_id: os_id,
+            ext: ext
+        }
 
-      def define
-        desc "Download #{dependency} distribution"
-        task name do
-          parameters = {
-              version: version,
-              platform: platform,
-              os_id: os_id,
-              ext: ext
-          }
-
-          uri = Template.new(uri_template)
+        uri = Template.new(uri_template)
             .with_parameters(parameters)
             .render
-          download_file_name = Template.new(file_name_template)
+        download_file_name = Template.new(file_name_template)
             .with_parameters(parameters)
             .render
-          download_file_directory = File.join(path, distribution_directory)
-          download_file_path = File.join(download_file_directory, download_file_name)
+        download_file_directory = File.join(path, distribution_directory)
+        download_file_path = File.join(download_file_directory, download_file_name)
 
-          temporary_file = open(uri)
+        temporary_file = open(uri)
 
-          mkdir_p download_file_directory
-          cp temporary_file.path, download_file_path
-        end
+        mkdir_p download_file_directory
+        cp temporary_file.path, download_file_path
       end
 
       private
@@ -65,12 +59,16 @@ module RakeDependencies
 
       def ext
         case resolved_type
-          when :tar_gz then '.tar.gz'
-          when :tgz then '.tgz'
-          when :zip then '.zip'
-          when :uncompressed then ''
-          else
-            raise "Unknown type: #{type}"
+        when :tar_gz then
+          '.tar.gz'
+        when :tgz then
+          '.tgz'
+        when :zip then
+          '.zip'
+        when :uncompressed then
+          ''
+        else
+          raise "Unknown type: #{type}"
         end
       end
     end

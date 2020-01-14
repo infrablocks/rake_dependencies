@@ -3,11 +3,10 @@ require 'spec_helper'
 describe RakeDependencies::Tasks::Extract do
   include_context :rake
 
-  def define_task(*args, &block)
+  def define_task(opts = {}, &block)
     namespace :dependency do
-      subject.new(*args) do |t|
+      subject.define({dependency: 'some-dep'}.merge(opts)) do |t|
         t.type = :zip
-        t.dependency = 'some-dep'
         t.path = 'vendor/dependency'
         t.version = '1.2.3'
         t.file_name_template = 'some-dep-<%= @os_id %><%= @ext %>'
@@ -32,14 +31,15 @@ describe RakeDependencies::Tasks::Extract do
     end
 
     it 'gives the extract task a description' do
-      define_task { |t| t.dependency = 'the-thing' }
+      define_task(dependency: 'the-thing')
 
-      expect(rake.last_description).to(eq('Extract the-thing archive'))
+      expect(Rake::Task['dependency:extract'].full_comment)
+          .to(eq('Extract the-thing archive'))
     end
 
     it 'allows multiple extract tasks to be declared' do
-      define_task { |t| t.name = 'extract1' }
-      define_task { |t| t.name = 'extract2' }
+      define_task(name: 'extract1')
+      define_task(name: 'extract2')
 
       expect(Rake::Task['dependency:extract1']).not_to be_nil
       expect(Rake::Task['dependency:extract2']).not_to be_nil
@@ -48,7 +48,7 @@ describe RakeDependencies::Tasks::Extract do
 
   context 'parameters' do
     it 'allows the task name to be overridden' do
-      define_task(:unarchive)
+      define_task(name: :unarchive)
 
       expect(Rake::Task['dependency:unarchive']).not_to be_nil
     end

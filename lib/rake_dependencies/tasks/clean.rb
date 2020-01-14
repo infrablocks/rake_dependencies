@@ -1,21 +1,16 @@
-require_relative '../tasklib'
+require 'rake_factory'
 
 module RakeDependencies
   module Tasks
-    class Clean < TaskLib
-      parameter :name, :default => :clean
-      parameter :path, :required => true
+    class Clean < RakeFactory::Task
+      default_name :clean
+      default_description ->(t) { "Clean vendored #{t.dependency}" }
+
       parameter :dependency, :required => true
+      parameter :path, :required => true
 
-      def process_arguments(args)
-        self.name = args[0] if args[0]
-      end
-
-      def define
-        desc "Clean vendored #{dependency}"
-        task name do
-          rm_rf path
-        end
+      action do |t|
+        rm_rf t.path
       end
     end
   end

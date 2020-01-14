@@ -3,10 +3,9 @@ require 'spec_helper'
 describe RakeDependencies::Tasks::Install do
   include_context :rake
 
-  def define_task(*args, &block)
+  def define_task(opts = {}, &block)
     namespace :dependency do
-      subject.new(*args) do |t|
-        t.dependency = 'some-dep'
+      subject.define({dependency: 'some-dep'}.merge(opts)) do |t|
         t.path = 'vendor/dependency'
         t.binary_name_template = 'some-dep-<%= @version %>'
         t.installation_directory = 'some/important/directory'
@@ -31,14 +30,15 @@ describe RakeDependencies::Tasks::Install do
     end
 
     it 'gives the install task a description' do
-      define_task { |t| t.dependency = 'the-thing' }
+      define_task(dependency: 'the-thing')
 
-      expect(rake.last_description).to(eq('Install the-thing'))
+      expect(Rake::Task['dependency:install'].full_comment)
+          .to(eq('Install the-thing'))
     end
 
     it 'allows multiple install tasks to be declared ' do
-      define_task { |t| t.name = 'install1' }
-      define_task { |t| t.name = 'install2' }
+      define_task(name: 'install1')
+      define_task(name: 'install2')
 
       expect(Rake::Task['dependency:install1']).not_to be_nil
       expect(Rake::Task['dependency:install2']).not_to be_nil
@@ -47,7 +47,7 @@ describe RakeDependencies::Tasks::Install do
 
   context 'parameters' do
     it 'allows the task name to be overridden' do
-      define_task(:copy)
+      define_task(name: :copy)
 
       expect(Rake::Task['dependency:copy']).not_to be_nil
     end
