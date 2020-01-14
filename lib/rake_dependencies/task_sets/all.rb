@@ -1,14 +1,14 @@
 require 'rake_factory'
 
-require_relative 'clean'
-require_relative 'download'
-require_relative 'ensure'
-require_relative 'extract'
-require_relative 'fetch'
+require_relative '../tasks/clean'
+require_relative '../tasks/download'
+require_relative '../tasks/ensure'
+require_relative '../tasks/extract'
+require_relative '../tasks/fetch'
 
 
 module RakeDependencies
-  module Tasks
+  module TaskSets
     class All < RakeFactory::TaskSet
       parameter :containing_namespace
 
@@ -41,18 +41,18 @@ module RakeDependencies
 
       alias namespace= containing_namespace=
 
-      task Clean, name: ->(ts) { ts.clean_task_name }
-      task Download, name: ->(ts) { ts.download_task_name }
-      task Extract, name: ->(ts) { ts.extract_task_name }
-      task Install, {
+      task Tasks::Clean, name: ->(ts) { ts.clean_task_name }
+      task Tasks::Download, name: ->(ts) { ts.download_task_name }
+      task Tasks::Extract, name: ->(ts) { ts.extract_task_name }
+      task Tasks::Install, {
           name: ->(ts) { ts.install_task_name },
           define_if: ->(ts) { ts.installation_directory }
       } do |ts, t|
         t.binary_name_template =
             ts.target_binary_name_template || ts.dependency
       end
-      task Fetch, name: ->(ts) { ts.fetch_task_name }
-      task Ensure, name: ->(ts) { ts.ensure_task_name }
+      task Tasks::Fetch, name: ->(ts) { ts.fetch_task_name }
+      task Tasks::Ensure, name: ->(ts) { ts.ensure_task_name }
 
       def define_on(application)
         if containing_namespace

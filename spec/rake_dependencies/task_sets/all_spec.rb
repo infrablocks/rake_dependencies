@@ -1,7 +1,7 @@
 require 'spec_helper'
 require 'fileutils'
 
-describe RakeDependencies::Tasks::All do
+describe RakeDependencies::TaskSets::All do
   include_context :rake
 
   def define_tasks(opts = {}, &block)
