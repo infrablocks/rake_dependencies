@@ -26,14 +26,14 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency 'rake_factory', '~> 0.7'
   spec.add_dependency 'hamster', '~> 3.0'
-  spec.add_dependency 'rubyzip', '>= 1.2.2'
-  spec.add_dependency 'minitar', '~> 0.7'
+  spec.add_dependency 'rubyzip', '~> 2.0'
+  spec.add_dependency 'minitar', '~> 0.9'
 
-  spec.add_development_dependency 'bundler', '~> 2.0'
+  spec.add_development_dependency 'bundler', '~> 2.1'
   spec.add_development_dependency 'rake', '~> 13.0'
-  spec.add_development_dependency 'rspec', '~> 3.8'
-  spec.add_development_dependency 'gem-release', '~> 2.0'
+  spec.add_development_dependency 'rspec', '~> 3.9'
+  spec.add_development_dependency 'gem-release', '~> 2.1'
   spec.add_development_dependency 'activesupport', '~> 5.2'
-  spec.add_development_dependency 'fakefs', '~> 0.18'
-  spec.add_development_dependency 'simplecov', '~> 0.16'
+  spec.add_development_dependency 'fakefs', '~> 1.0'
+  spec.add_development_dependency 'simplecov', '~> 0.17'
 end
