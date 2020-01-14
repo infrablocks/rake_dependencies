@@ -6,7 +6,6 @@ jobs:
     - image: ruby:2.5.1
     steps:
     - checkout
-    - run: ./scripts/ci/common/fix-bundler.sh
     - run: ./scripts/ci/steps/test.sh
   prerelease:
     working_directory: ~/rake-dependencies
@@ -14,7 +13,6 @@ jobs:
     - image: ruby:2.5.1
     steps:
     - checkout
-    - run: ./scripts/ci/common/fix-bundler.sh
     - run: ./scripts/ci/common/install-git-crypt.sh
     - run: ./scripts/ci/common/install-gpg-key.sh
     - run: ./scripts/ci/common/configure-git.sh
@@ -26,7 +24,6 @@ jobs:
     - image: ruby:2.5.1
     steps:
     - checkout
-    - run: ./scripts/ci/common/fix-bundler.sh
     - run: ./scripts/ci/common/install-git-crypt.sh
     - run: ./scripts/ci/common/install-gpg-key.sh
     - run: ./scripts/ci/common/configure-git.sh

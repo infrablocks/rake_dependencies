@@ -35,9 +35,9 @@ fi
 if [[ "$offline" = "no" ]]; then
     echo "Installing bundler."
     if [[ "$verbose" = "yes" ]]; then
-        gem install --no-document bundler
+        gem install --no-document bundler --default
     else
-        gem install --no-document bundler > /dev/null
+        gem install --no-document bundler --default > /dev/null
     fi
 
     echo "Installing ruby dependencies."
