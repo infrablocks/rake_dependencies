@@ -9,4 +9,7 @@ PROJECT_DIR="$( cd "$SCRIPT_DIR/../../.." && pwd )"
 
 cd "$PROJECT_DIR"
 
+which bundle
+bundle --version
+
 ./go spec
