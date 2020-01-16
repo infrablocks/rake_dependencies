@@ -4,7 +4,7 @@ PATH
     rake_dependencies (1.2.0)
       hamster (~> 3.0)
       minitar (~> 0.9)
-      rake_factory (~> 0.7)
+      rake_factory (~> 0.8)
       rubyzip (~> 2.0)
 
 GEM
@@ -28,7 +28,7 @@ GEM
     minitar (0.9)
     minitest (5.14.0)
     rake (13.0.1)
-    rake_factory (0.7.0)
+    rake_factory (0.8.0)
       activesupport (~> 5.2)
       rake (~> 13.0)
     rspec (3.9.0)

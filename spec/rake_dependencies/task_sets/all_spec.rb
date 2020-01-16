@@ -5,7 +5,8 @@ describe RakeDependencies::TaskSets::All do
   include_context :rake
 
   def define_tasks(opts = {}, &block)
-    subject.define({namespace: :some_namespace}.merge(opts)) do |t|
+    subject.define(opts) do |t|
+      t.namespace = :some_namespace
       t.dependency = 'super-cool-tool'
       t.version = '1.2.3'
       t.path = 'vendor/dependency'
@@ -32,7 +33,9 @@ describe RakeDependencies::TaskSets::All do
   end
 
   it 'adds tasks in the provided namespace when supplied' do
-    define_tasks(namespace: :important_dependency)
+    define_tasks do |t|
+      t.namespace = :important_dependency
+    end
 
     expect(Rake::Task['important_dependency:clean']).not_to be_nil
     expect(Rake::Task['important_dependency:download']).not_to be_nil
@@ -46,7 +49,8 @@ describe RakeDependencies::TaskSets::All do
 
   it 'includes an install task in the provided namespace when installation ' +
       'directory and namespace supplied' do
-    define_tasks(namespace: :important_dependency) do |t|
+    define_tasks do |t|
+      t.namespace = :important_dependency
       t.installation_directory = 'some/important/directory'
     end
 
@@ -59,7 +63,9 @@ describe RakeDependencies::TaskSets::All do
   end
 
   it 'adds tasks in the root namespace when none supplied' do
-    define_tasks(namespace: nil)
+    define_tasks do |t|
+      t.namespace = nil
+    end
 
     expect(Rake::Task['clean']).not_to be_nil
     expect(Rake::Task['download']).not_to be_nil
@@ -72,7 +78,8 @@ describe RakeDependencies::TaskSets::All do
 
   it 'includes an install task in the root namespace when installation ' +
       'directory supplied and namespace not supplied' do
-    define_tasks(namespace: nil) do |t|
+    define_tasks do |t|
+      t.namespace = nil
       t.installation_directory = 'some/important/directory'
     end
 

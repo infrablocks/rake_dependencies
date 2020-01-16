@@ -10,6 +10,8 @@ require_relative '../tasks/fetch'
 module RakeDependencies
   module TaskSets
     class All < RakeFactory::TaskSet
+      prepend RakeFactory::Namespaceable
+
       parameter :containing_namespace
 
       parameter :dependency, required: true
@@ -39,8 +41,6 @@ module RakeDependencies
       parameter :fetch_task_name, default: :fetch
       parameter :ensure_task_name, default: :ensure
 
-      alias namespace= containing_namespace=
-
       task Tasks::Clean, name: ->(ts) { ts.clean_task_name }
       task Tasks::Download, name: ->(ts) { ts.download_task_name }
       task Tasks::Extract, name: ->(ts) { ts.extract_task_name }
@@ -53,16 +53,6 @@ module RakeDependencies
       end
       task Tasks::Fetch, name: ->(ts) { ts.fetch_task_name }
       task Tasks::Ensure, name: ->(ts) { ts.ensure_task_name }
-
-      def define_on(application)
-        if containing_namespace
-          namespace containing_namespace do
-            super(application)
-          end
-        else
-          super(application)
-        end
-      end
     end
   end
 end
