@@ -4,7 +4,7 @@ PATH
     rake_dependencies (1.6.0)
       hamster (~> 3.0)
       minitar (~> 0.9)
-      rake_factory (~> 0.11)
+      rake_factory (>= 0.11)
       rubyzip (~> 2.0)
 
 GEM
