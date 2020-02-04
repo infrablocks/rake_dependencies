@@ -33,7 +33,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'rake', '~> 13.0'
   spec.add_development_dependency 'rspec', '~> 3.9'
   spec.add_development_dependency 'gem-release', '~> 2.1'
-  spec.add_development_dependency 'activesupport', '~> 5.2'
+  spec.add_development_dependency 'activesupport', '>= 4'
   spec.add_development_dependency 'fakefs', '~> 1.0'
   spec.add_development_dependency 'simplecov', '~> 0.17'
 end
