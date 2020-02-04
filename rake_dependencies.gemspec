@@ -26,7 +26,7 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency 'rake_factory', '>= 0.11'
   spec.add_dependency 'hamster', '~> 3.0'
-  spec.add_dependency 'rubyzip', '~> 2.0'
+  spec.add_dependency 'rubyzip', '>= 1.3'
   spec.add_dependency 'minitar', '~> 0.9'
 
   spec.add_development_dependency 'bundler', '~> 2.1'
