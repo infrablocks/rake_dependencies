@@ -15,6 +15,7 @@ module RakeDependencies
       def extract
         FileUtils.mkdir_p(@extract_path)
         Zip::File.open(@file_path) do |zip_file_entries|
+          zip_file_entries.restore_permissions = true
           zip_file_entries.each do |entry|
             entry_pathname = Pathname.new(entry.name)
             strip_pathname = Pathname.new(@options[:strip_path] || '')

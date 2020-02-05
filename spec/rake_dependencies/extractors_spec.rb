@@ -36,6 +36,7 @@ describe RakeDependencies::Extractors do
 
       allow(zip_file_entries).to(receive_entries)
       allow(zip_file_entries).to(receive(:extract))
+      allow(zip_file_entries).to(receive(:restore_permissions=).with(true))
       allow(Zip::File).to(receive(:open).and_yield(zip_file_entries))
 
       zip_file_entries
