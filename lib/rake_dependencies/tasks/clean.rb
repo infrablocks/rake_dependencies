@@ -4,7 +4,9 @@ module RakeDependencies
   module Tasks
     class Clean < RakeFactory::Task
       default_name :clean
-      default_description ->(t) { "Clean vendored #{t.dependency}" }
+      default_description RakeFactory::DynamicValue.new { |t|
+        "Clean vendored #{t.dependency}"
+      }
 
       parameter :dependency, :required => true
       parameter :path, :required => true

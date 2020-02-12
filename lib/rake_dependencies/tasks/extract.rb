@@ -8,7 +8,9 @@ module RakeDependencies
   module Tasks
     class Extract < RakeFactory::Task
       default_name :extract
-      default_description ->(t) { "Extract #{t.dependency} archive" }
+      default_description RakeFactory::DynamicValue.new { |t|
+        "Extract #{t.dependency} archive"
+      }
 
       parameter :type, default: :zip
       parameter :os_ids, default: {

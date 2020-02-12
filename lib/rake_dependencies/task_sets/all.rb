@@ -32,7 +32,7 @@ module RakeDependencies
       parameter :source_binary_name_template
       parameter :target_binary_name_template
 
-      parameter :needs_fetch, required: true, lazy: true
+      parameter :needs_fetch, required: true
 
       parameter :clean_task_name, default: :clean
       parameter :download_task_name, default: :download
@@ -41,18 +41,30 @@ module RakeDependencies
       parameter :fetch_task_name, default: :fetch
       parameter :ensure_task_name, default: :ensure
 
-      task Tasks::Clean, name: ->(ts) { ts.clean_task_name }
-      task Tasks::Download, name: ->(ts) { ts.download_task_name }
-      task Tasks::Extract, name: ->(ts) { ts.extract_task_name }
+      task Tasks::Clean, name: RakeFactory::DynamicValue.new { |ts|
+        ts.clean_task_name
+      }
+      task Tasks::Download, name: RakeFactory::DynamicValue.new { |ts|
+        ts.download_task_name
+      }
+      task Tasks::Extract, name: RakeFactory::DynamicValue.new { |ts|
+        ts.extract_task_name
+      }
       task Tasks::Install, {
-          name: ->(ts) { ts.install_task_name },
+          name: RakeFactory::DynamicValue.new { |ts|
+            ts.install_task_name
+          },
           define_if: ->(ts) { ts.installation_directory }
       } do |ts, t|
         t.binary_name_template =
             ts.target_binary_name_template || ts.dependency
       end
-      task Tasks::Fetch, name: ->(ts) { ts.fetch_task_name }
-      task Tasks::Ensure, name: ->(ts) { ts.ensure_task_name }
+      task Tasks::Fetch, name: RakeFactory::DynamicValue.new { |ts|
+        ts.fetch_task_name
+      }
+      task Tasks::Ensure, name: RakeFactory::DynamicValue.new { |ts|
+        ts.ensure_task_name
+      }
     end
   end
 end

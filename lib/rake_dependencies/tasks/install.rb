@@ -4,7 +4,9 @@ module RakeDependencies
   module Tasks
     class Install < RakeFactory::Task
       default_name :install
-      default_description ->(t) { "Install #{t.dependency}" }
+      default_description RakeFactory::DynamicValue.new { |t|
+        "Install #{t.dependency}"
+      }
 
       parameter :os_ids, default: {
           mac: 'mac',
