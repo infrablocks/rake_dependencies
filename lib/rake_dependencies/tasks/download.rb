@@ -7,7 +7,9 @@ module RakeDependencies
   module Tasks
     class Download < RakeFactory::Task
       default_name :download
-      default_description ->(t) { "Download #{t.dependency} distribution" }
+      default_description RakeFactory::DynamicValue.new { |t|
+        "Download #{t.dependency} distribution"
+      }
 
       parameter :type, default: :zip
       parameter :os_ids, default: {mac: 'mac', linux: 'linux'}

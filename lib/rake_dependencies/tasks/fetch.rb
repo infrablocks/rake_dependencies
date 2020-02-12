@@ -4,7 +4,9 @@ module RakeDependencies
   module Tasks
     class Fetch < RakeFactory::Task
       default_name :fetch
-      default_description ->(t) { "Fetch #{t.dependency}" }
+      default_description RakeFactory::DynamicValue.new { |t|
+        "Fetch #{t.dependency}"
+      }
 
       parameter :dependency, required: true
       parameter :download_task_name, default: :download

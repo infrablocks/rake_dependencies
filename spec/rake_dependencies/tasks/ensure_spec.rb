@@ -143,8 +143,6 @@ describe RakeDependencies::Tasks::Ensure do
       end
 
       expect(needs_fetch_checker)
-          .to(receive(:arity).at_least(:once).and_return(1))
-      expect(needs_fetch_checker)
           .to(receive(:call)
               .at_least(:once)
               .with(satisfy { |t|
@@ -166,8 +164,6 @@ describe RakeDependencies::Tasks::Ensure do
       end
 
       expect(needs_fetch_checker)
-          .to(receive(:arity).at_least(:once).and_return(1))
-      expect(needs_fetch_checker)
           .to(receive(:call)
               .at_least(:once)
               .with(satisfy { |t|
@@ -188,8 +184,6 @@ describe RakeDependencies::Tasks::Ensure do
         t.needs_fetch = needs_fetch_checker
       end
 
-      expect(needs_fetch_checker)
-          .to(receive(:arity).at_least(:once).and_return(1))
       expect(needs_fetch_checker)
           .to(receive(:call)
               .at_least(:once)

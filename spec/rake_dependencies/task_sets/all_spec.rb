@@ -583,7 +583,7 @@ describe RakeDependencies::TaskSets::All do
       expect(ensure_task.creator.dependency).to(eq(dependency))
       expect(ensure_task.creator.version).to(eq(version))
       expect(ensure_task.creator.path).to(eq(path))
-      expect(ensure_task.creator.needs_fetch).to(eq(true))
+      expect(ensure_task.creator.needs_fetch).to(eq(needs_fetch))
     end
 
     it 'passes the default binary_directory when none supplied' do

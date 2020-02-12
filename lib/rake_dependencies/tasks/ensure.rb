@@ -4,7 +4,9 @@ module RakeDependencies
   module Tasks
     class Ensure < RakeFactory::Task
       default_name :ensure
-      default_description ->(t) { "Ensure #{t.dependency} present" }
+      default_description RakeFactory::DynamicValue.new { |t|
+        "Ensure #{t.dependency} present"
+      }
 
       parameter :dependency, required: true
       parameter :version
@@ -29,7 +31,7 @@ module RakeDependencies
           Rake::Task[install_name]
         end
 
-        if needs_fetch
+        if needs_fetch.call(t)
           [clean, download, extract, install].compact.map(&:invoke)
         end
       end
