@@ -1,3 +1,3 @@
 module RakeDependencies
-  VERSION = "2.4.0.pre.1"
+  VERSION = "2.5.0"
 end
