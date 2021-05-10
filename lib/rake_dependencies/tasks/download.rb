@@ -39,7 +39,7 @@ module RakeDependencies
         download_file_directory = File.join(path, distribution_directory)
         download_file_path = File.join(download_file_directory, download_file_name)
 
-        temporary_file = open(uri)
+        temporary_file = URI.open(uri)
 
         mkdir_p download_file_directory
         cp temporary_file.path, download_file_path

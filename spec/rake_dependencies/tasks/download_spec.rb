@@ -32,7 +32,7 @@ describe RakeDependencies::Tasks::Download do
 
   def stub_open_uri
     File.open('/tmp_file', 'w') { |f| f.write('content') }
-    allow_any_instance_of(subject).to(receive(:open).and_return(File.new('/tmp_file')))
+    allow(URI).to(receive(:open).and_return(File.new('/tmp_file')))
   end
 
   def stub_make_directory
@@ -109,7 +109,7 @@ describe RakeDependencies::Tasks::Download do
     set_platform_to('darwin')
     stub_external_calls
 
-    expect_any_instance_of(subject)
+    expect(URI)
         .to(receive(:open)
                 .with('https://example.com/1.2.3/super-cool-tool-mac-x86_64.tar.gz'))
 
@@ -122,7 +122,7 @@ describe RakeDependencies::Tasks::Download do
     stub_external_calls
 
     File.open('/download_file', 'w') { |f| f.write('download_content') }
-    allow_any_instance_of(subject)
+    allow(URI)
         .to(receive(:open)
                 .and_return(File.new('/download_file')))
 
@@ -138,7 +138,7 @@ describe RakeDependencies::Tasks::Download do
     set_platform_to('darwin')
     stub_external_calls
 
-    expect_any_instance_of(subject)
+    expect(URI)
         .to(receive(:open)
                 .with('mac'))
 
@@ -150,7 +150,7 @@ describe RakeDependencies::Tasks::Download do
     set_platform_to('unix')
     stub_external_calls
 
-    expect_any_instance_of(subject)
+    expect(URI)
         .to(receive(:open)
                 .with('linux'))
 
@@ -162,7 +162,7 @@ describe RakeDependencies::Tasks::Download do
     set_platform_to('darwin')
     stub_external_calls
 
-    expect_any_instance_of(subject)
+    expect(URI)
         .to(receive(:open)
                 .with('mac'))
 
@@ -174,7 +174,7 @@ describe RakeDependencies::Tasks::Download do
     set_platform_to('linux')
     stub_external_calls
 
-    expect_any_instance_of(subject)
+    expect(URI)
         .to(receive(:open)
                 .with('linux'))
 
@@ -189,7 +189,7 @@ describe RakeDependencies::Tasks::Download do
     set_platform_to('darwin')
     stub_external_calls
 
-    expect_any_instance_of(subject)
+    expect(URI)
         .to(receive(:open)
                 .with('darwin'))
 
@@ -204,7 +204,7 @@ describe RakeDependencies::Tasks::Download do
     set_platform_to('linux')
     stub_external_calls
 
-    expect_any_instance_of(subject)
+    expect(URI)
         .to(receive(:open)
                 .with('linux64'))
 
@@ -219,7 +219,7 @@ describe RakeDependencies::Tasks::Download do
     set_platform
     stub_external_calls
 
-    expect_any_instance_of(subject)
+    expect(URI)
         .to(receive(:open)
                 .with('.zip'))
 
@@ -234,7 +234,7 @@ describe RakeDependencies::Tasks::Download do
     set_platform
     stub_external_calls
 
-    expect_any_instance_of(subject)
+    expect(URI)
         .to(receive(:open)
                 .with('.tgz'))
 
@@ -249,7 +249,7 @@ describe RakeDependencies::Tasks::Download do
     set_platform
     stub_external_calls
 
-    expect_any_instance_of(subject)
+    expect(URI)
         .to(receive(:open)
                 .with(''))
 
@@ -264,7 +264,7 @@ describe RakeDependencies::Tasks::Download do
     set_platform_to('linux')
     stub_external_calls
 
-    expect_any_instance_of(subject)
+    expect(URI)
         .to(receive(:open)
                 .with('.tar.gz'))
 
