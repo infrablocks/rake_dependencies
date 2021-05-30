@@ -6,13 +6,13 @@ require 'rake_dependencies/version'
 Gem::Specification.new do |spec|
   spec.name = 'rake_dependencies'
   spec.version = RakeDependencies::VERSION
-  spec.authors = ['Toby Clemson']
-  spec.email = ['tobyclemson@gmail.com']
+  spec.authors = ['InfraBlocks Maintainers']
+  spec.email = ['maintainers@infrablocks.io']
 
   spec.date = '2017-01-31'
   spec.summary = 'Rake tasks for managing build dependencies.'
   spec.description = 'Provides rake tasks for downloading and extracting tools depended on for further build activities.'
-  spec.homepage = 'https://github.com/tobyclemson/rake_dependencies'
+  spec.homepage = 'https://github.com/infrablocks/rake_dependencies'
   spec.license = 'MIT'
 
   spec.files = `git ls-files -z`.split("\x0").select do |f|
