@@ -90,7 +90,7 @@ GEM
     ruby2_keywords (0.0.4)
     ruby_gpg2 (0.8.0)
       lino (>= 1.5)
-    rubyzip (2.3.0)
+    rubyzip (2.3.2)
     sawyer (0.8.2)
       addressable (>= 2.3.5)
       faraday (> 0.8, < 2.0)
