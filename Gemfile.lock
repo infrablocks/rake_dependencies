@@ -37,7 +37,7 @@ GEM
     faraday-excon (1.1.0)
     faraday-net_http (1.0.1)
     faraday-net_http_persistent (1.1.0)
-    gem-release (2.2.1)
+    gem-release (2.2.2)
     hamster (3.0.0)
       concurrent-ruby (~> 1.0)
     i18n (1.8.10)
