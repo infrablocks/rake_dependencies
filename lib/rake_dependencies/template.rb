@@ -14,7 +14,7 @@ module RakeDependencies
       Template.new(@template, @parameters.put(key, value))
     end
 
-    def with_parameters **pairs
+    def with_parameters pairs
       pairs.to_a.reduce(self) do |memo, parameter|
         memo.with_parameter(*parameter)
       end
