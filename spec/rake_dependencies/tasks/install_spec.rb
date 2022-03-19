@@ -15,11 +15,13 @@ describe RakeDependencies::Tasks::Install do
   end
 
   def set_platform_to(string)
-    stub_const('RUBY_PLATFORM', string)
+    allow(Gem::Platform)
+      .to(receive(:local)
+            .and_return(Gem::Platform.new(string)))
   end
 
   def set_platform
-    set_platform_to('darwin')
+    set_platform_to('arm64-darwin-21')
   end
 
   context 'task definition' do
@@ -52,131 +54,420 @@ describe RakeDependencies::Tasks::Install do
       expect(Rake::Task['dependency:copy']).not_to be_nil
     end
 
-    it 'passes a platform of :mac for a darwin platform' do
+    it 'passes a platform CPU name of "amd64" for x86_64 by default' do
       define_task { |t|
         t.path = 'some/path'
-        t.binary_name_template = '<%= @platform %>'
+        t.binary_name_template = '<%= @platform_cpu_name %>'
         t.installation_directory = 'somewhere/important'
       }
 
       stub_cp
       stub_mkdir_p
 
-      set_platform_to('darwin')
+      set_platform_to('x86_64-darwin')
 
       expect_any_instance_of(subject)
-          .to(receive(:mkdir_p).with('somewhere/important'))
+        .to(receive(:mkdir_p).with('somewhere/important'))
       expect_any_instance_of(subject)
-          .to(receive(:cp).with('some/path/bin/mac', 'somewhere/important'))
+        .to(receive(:cp).with('some/path/bin/amd64', 'somewhere/important'))
 
       Rake::Task['dependency:install'].invoke
     end
 
-    it 'passes a platform of :linux for all other platforms' do
+    it 'passes a platform CPU name of "amd64" for x64 by default' do
       define_task { |t|
         t.path = 'some/path'
-        t.binary_name_template = '<%= @platform %>'
+        t.binary_name_template = '<%= @platform_cpu_name %>'
         t.installation_directory = 'somewhere/important'
       }
 
       stub_cp
       stub_mkdir_p
 
-      set_platform_to('linux')
+      set_platform_to('x64-linux')
 
       expect_any_instance_of(subject)
-          .to(receive(:mkdir_p).with('somewhere/important'))
+        .to(receive(:mkdir_p).with('somewhere/important'))
       expect_any_instance_of(subject)
-          .to(receive(:cp).with('some/path/bin/linux', 'somewhere/important'))
+        .to(receive(:cp).with('some/path/bin/amd64', 'somewhere/important'))
 
       Rake::Task['dependency:install'].invoke
     end
 
-    it 'passes an OS ID of "mac" for a :mac platform by default' do
+    it 'passes a platform CPU name of "386" for x86 by default' do
       define_task { |t|
         t.path = 'some/path'
-        t.binary_name_template = '<%= @os_id %>'
+        t.binary_name_template = '<%= @platform_cpu_name %>'
         t.installation_directory = 'somewhere/important'
       }
 
       stub_cp
       stub_mkdir_p
 
-      set_platform_to('darwin')
+      set_platform_to('x86-linux')
 
       expect_any_instance_of(subject)
-          .to(receive(:mkdir_p).with('somewhere/important'))
+        .to(receive(:mkdir_p).with('somewhere/important'))
       expect_any_instance_of(subject)
-          .to(receive(:cp).with('some/path/bin/mac', 'somewhere/important'))
+        .to(receive(:cp).with('some/path/bin/386', 'somewhere/important'))
 
       Rake::Task['dependency:install'].invoke
     end
 
-    it 'passes an OS ID of "linux" for a :linux platforms by default' do
+    it 'passes a platform CPU name of "arm" for arm by default' do
       define_task { |t|
         t.path = 'some/path'
-        t.binary_name_template = '<%= @os_id %>'
+        t.binary_name_template = '<%= @platform_cpu_name %>'
         t.installation_directory = 'somewhere/important'
       }
 
       stub_cp
       stub_mkdir_p
 
-      set_platform_to('linux')
+      set_platform_to('arm-linux')
 
       expect_any_instance_of(subject)
-          .to(receive(:mkdir_p).with('somewhere/important'))
+        .to(receive(:mkdir_p).with('somewhere/important'))
       expect_any_instance_of(subject)
-          .to(receive(:cp).with('some/path/bin/linux', 'somewhere/important'))
+        .to(receive(:cp).with('some/path/bin/arm', 'somewhere/important'))
 
       Rake::Task['dependency:install'].invoke
     end
 
-    it 'passes the provided OS ID for a :mac platform when present' do
+    it 'passes a platform CPU name of "arm64" for arm64 by default' do
       define_task { |t|
-        t.os_ids = {mac: 'darwin', linux: 'linux64'}
         t.path = 'some/path'
-        t.binary_name_template = '<%= @os_id %>'
+        t.binary_name_template = '<%= @platform_cpu_name %>'
         t.installation_directory = 'somewhere/important'
       }
 
       stub_cp
       stub_mkdir_p
 
-      set_platform_to('darwin')
+      set_platform_to('arm64-darwin-21')
 
       expect_any_instance_of(subject)
-          .to(receive(:mkdir_p).with('somewhere/important'))
+        .to(receive(:mkdir_p).with('somewhere/important'))
       expect_any_instance_of(subject)
-          .to(receive(:cp).with('some/path/bin/darwin', 'somewhere/important'))
+        .to(receive(:cp).with('some/path/bin/arm64', 'somewhere/important'))
 
       Rake::Task['dependency:install'].invoke
     end
 
-    it 'passes the provided OS ID for a :linux platform when present' do
+    it 'passes the provided platform CPU name for x86_64 when present' do
       define_task { |t|
-        t.os_ids = {mac: 'darwin', linux: 'linux64'}
         t.path = 'some/path'
-        t.binary_name_template = '<%= @os_id %>'
+        t.platform_cpu_names = { x86_64: 'x86_64' }
+        t.binary_name_template = '<%= @platform_cpu_name %>'
         t.installation_directory = 'somewhere/important'
       }
 
       stub_cp
       stub_mkdir_p
 
-      set_platform_to('linux')
+      set_platform_to('x86_64-darwin')
 
       expect_any_instance_of(subject)
-          .to(receive(:mkdir_p).with('somewhere/important'))
+        .to(receive(:mkdir_p).with('somewhere/important'))
       expect_any_instance_of(subject)
-          .to(receive(:cp).with('some/path/bin/linux64', 'somewhere/important'))
+        .to(receive(:cp).with('some/path/bin/x86_64', 'somewhere/important'))
+
+      Rake::Task['dependency:install'].invoke
+    end
+
+    it 'passes the provided platform CPU name for x64 when present' do
+      define_task { |t|
+        t.path = 'some/path'
+        t.platform_cpu_names = { x64: 'x86_64' }
+        t.binary_name_template = '<%= @platform_cpu_name %>'
+        t.installation_directory = 'somewhere/important'
+      }
+
+      stub_cp
+      stub_mkdir_p
+
+      set_platform_to('x64-linux')
+
+      expect_any_instance_of(subject)
+        .to(receive(:mkdir_p).with('somewhere/important'))
+      expect_any_instance_of(subject)
+        .to(receive(:cp).with('some/path/bin/x86_64', 'somewhere/important'))
+
+      Rake::Task['dependency:install'].invoke
+    end
+
+    it 'passes the provided platform CPU name for x86 when present' do
+      define_task { |t|
+        t.path = 'some/path'
+        t.platform_cpu_names = { x86: 'x86' }
+        t.binary_name_template = '<%= @platform_cpu_name %>'
+        t.installation_directory = 'somewhere/important'
+      }
+
+      stub_cp
+      stub_mkdir_p
+
+      set_platform_to('x86-linux')
+
+      expect_any_instance_of(subject)
+        .to(receive(:mkdir_p).with('somewhere/important'))
+      expect_any_instance_of(subject)
+        .to(receive(:cp).with('some/path/bin/x86', 'somewhere/important'))
+
+      Rake::Task['dependency:install'].invoke
+    end
+
+    it 'passes the provided platform CPU name for arm when present' do
+      define_task { |t|
+        t.path = 'some/path'
+        t.platform_cpu_names = { arm: 'armv4' }
+        t.binary_name_template = '<%= @platform_cpu_name %>'
+        t.installation_directory = 'somewhere/important'
+      }
+
+      stub_cp
+      stub_mkdir_p
+
+      set_platform_to('arm-linux')
+
+      expect_any_instance_of(subject)
+        .to(receive(:mkdir_p).with('somewhere/important'))
+      expect_any_instance_of(subject)
+        .to(receive(:cp).with('some/path/bin/armv4', 'somewhere/important'))
+
+      Rake::Task['dependency:install'].invoke
+    end
+
+    it 'passes the provided platform CPU name for arm64 when present' do
+      define_task { |t|
+        t.path = 'some/path'
+        t.platform_cpu_names = { arm64: 'armv9' }
+        t.binary_name_template = '<%= @platform_cpu_name %>'
+        t.installation_directory = 'somewhere/important'
+      }
+
+      stub_cp
+      stub_mkdir_p
+
+      set_platform_to('arm64-darwin-21')
+
+      expect_any_instance_of(subject)
+        .to(receive(:mkdir_p).with('somewhere/important'))
+      expect_any_instance_of(subject)
+        .to(receive(:cp).with('some/path/bin/armv9', 'somewhere/important'))
+
+      Rake::Task['dependency:install'].invoke
+    end
+
+    it 'passes the provided platform CPU name for another arch when present' do
+      define_task { |t|
+        t.path = 'some/path'
+        t.platform_cpu_names = { powerpc: 'powerpc' }
+        t.binary_name_template = '<%= @platform_cpu_name %>'
+        t.installation_directory = 'somewhere/important'
+      }
+
+      stub_cp
+      stub_mkdir_p
+
+      set_platform_to('powerpc-linux')
+
+      expect_any_instance_of(subject)
+        .to(receive(:mkdir_p).with('somewhere/important'))
+      expect_any_instance_of(subject)
+        .to(receive(:cp).with('some/path/bin/powerpc', 'somewhere/important'))
+
+      Rake::Task['dependency:install'].invoke
+    end
+
+    it 'passes a platform OS name of "darwin" on darwin by default' do
+      define_task { |t|
+        t.path = 'some/path'
+        t.binary_name_template = '<%= @platform_os_name %>'
+        t.installation_directory = 'somewhere/important'
+      }
+
+      stub_cp
+      stub_mkdir_p
+
+      set_platform_to('arm64-darwin-21')
+
+      expect_any_instance_of(subject)
+        .to(receive(:mkdir_p).with('somewhere/important'))
+      expect_any_instance_of(subject)
+        .to(receive(:cp).with('some/path/bin/darwin', 'somewhere/important'))
+
+      Rake::Task['dependency:install'].invoke
+    end
+
+    it 'passes a platform OS name of "linux" on linux by default' do
+      define_task { |t|
+        t.path = 'some/path'
+        t.binary_name_template = '<%= @platform_os_name %>'
+        t.installation_directory = 'somewhere/important'
+      }
+
+      stub_cp
+      stub_mkdir_p
+
+      set_platform_to('x86_64-linux')
+
+      expect_any_instance_of(subject)
+        .to(receive(:mkdir_p).with('somewhere/important'))
+      expect_any_instance_of(subject)
+        .to(receive(:cp).with('some/path/bin/linux', 'somewhere/important'))
+
+      Rake::Task['dependency:install'].invoke
+    end
+
+    it 'passes a platform OS name of "windows" on mswin32 by default' do
+      define_task { |t|
+        t.path = 'some/path'
+        t.binary_name_template = '<%= @platform_os_name %>'
+        t.installation_directory = 'somewhere/important'
+      }
+
+      stub_cp
+      stub_mkdir_p
+
+      set_platform_to('x86-mswin32')
+
+      expect_any_instance_of(subject)
+        .to(receive(:mkdir_p).with('somewhere/important'))
+      expect_any_instance_of(subject)
+        .to(receive(:cp).with('some/path/bin/windows', 'somewhere/important'))
+
+      Rake::Task['dependency:install'].invoke
+    end
+
+    it 'passes a platform OS name of "windows" on mswin64 by default' do
+      define_task { |t|
+        t.path = 'some/path'
+        t.binary_name_template = '<%= @platform_os_name %>'
+        t.installation_directory = 'somewhere/important'
+      }
+
+      stub_cp
+      stub_mkdir_p
+
+      set_platform_to('x86_64-mswin64')
+
+      expect_any_instance_of(subject)
+        .to(receive(:mkdir_p).with('somewhere/important'))
+      expect_any_instance_of(subject)
+        .to(receive(:cp).with('some/path/bin/windows', 'somewhere/important'))
+
+      Rake::Task['dependency:install'].invoke
+    end
+
+    it 'passes the provided platform OS name for darwin when present' do
+      define_task { |t|
+        t.path = 'some/path'
+        t.platform_os_names = { darwin: 'mac' }
+        t.binary_name_template = '<%= @platform_os_name %>'
+        t.installation_directory = 'somewhere/important'
+      }
+
+      stub_cp
+      stub_mkdir_p
+
+      set_platform_to('x86_64-darwin')
+
+      expect_any_instance_of(subject)
+        .to(receive(:mkdir_p).with('somewhere/important'))
+      expect_any_instance_of(subject)
+        .to(receive(:cp).with('some/path/bin/mac', 'somewhere/important'))
+
+      Rake::Task['dependency:install'].invoke
+    end
+
+    it 'passes the provided platform OS name for linux when present' do
+      define_task { |t|
+        t.path = 'some/path'
+        t.platform_os_names = { linux: 'linux64' }
+        t.binary_name_template = '<%= @platform_os_name %>'
+        t.installation_directory = 'somewhere/important'
+      }
+
+      stub_cp
+      stub_mkdir_p
+
+      set_platform_to('x86_64-linux')
+
+      expect_any_instance_of(subject)
+        .to(receive(:mkdir_p).with('somewhere/important'))
+      expect_any_instance_of(subject)
+        .to(receive(:cp).with('some/path/bin/linux64', 'somewhere/important'))
+
+      Rake::Task['dependency:install'].invoke
+    end
+
+    it 'passes the provided platform OS name for mswin32 when present' do
+      define_task { |t|
+        t.path = 'some/path'
+        t.platform_os_names = { mswin32: 'mswin32' }
+        t.binary_name_template = '<%= @platform_os_name %>'
+        t.installation_directory = 'somewhere/important'
+      }
+
+      stub_cp
+      stub_mkdir_p
+
+      set_platform_to('i686-mswin32')
+
+      expect_any_instance_of(subject)
+        .to(receive(:mkdir_p).with('somewhere/important'))
+      expect_any_instance_of(subject)
+        .to(receive(:cp).with('some/path/bin/mswin32', 'somewhere/important'))
+
+      Rake::Task['dependency:install'].invoke
+    end
+
+    it 'passes the provided platform OS name for mswin64 when present' do
+      define_task { |t|
+        t.path = 'some/path'
+        t.platform_os_names = { mswin64: 'mswin64' }
+        t.binary_name_template = '<%= @platform_os_name %>'
+        t.installation_directory = 'somewhere/important'
+      }
+
+      stub_cp
+      stub_mkdir_p
+
+      set_platform_to('x64-mswin64')
+
+      expect_any_instance_of(subject)
+        .to(receive(:mkdir_p).with('somewhere/important'))
+      expect_any_instance_of(subject)
+        .to(receive(:cp).with('some/path/bin/mswin64', 'somewhere/important'))
+
+      Rake::Task['dependency:install'].invoke
+    end
+
+    it 'passes the provided platform OS name for another OS when present' do
+      define_task { |t|
+        t.path = 'some/path'
+        t.platform_os_names = { aix: 'aix' }
+        t.binary_name_template = '<%= @platform_os_name %>'
+        t.installation_directory = 'somewhere/important'
+      }
+
+      stub_cp
+      stub_mkdir_p
+
+      set_platform_to('x86-aix')
+
+      expect_any_instance_of(subject)
+        .to(receive(:mkdir_p).with('somewhere/important'))
+      expect_any_instance_of(subject)
+        .to(receive(:cp).with('some/path/bin/aix', 'somewhere/important'))
 
       Rake::Task['dependency:install'].invoke
     end
 
     it 'uses an extension of .zip when type is zip' do
       define_task do |t|
-        t.os_ids = {mac: 'darwin', linux: 'linux64'}
+        t.platform_os_names = {darwin: 'darwin', linux: 'linux64'}
         t.path = 'some/path'
         t.type = :zip
         t.binary_name_template = 'binary-from<%= @ext %>'
@@ -185,7 +476,7 @@ describe RakeDependencies::Tasks::Install do
       stub_cp
       stub_mkdir_p
 
-      set_platform_to('linux')
+      set_platform_to('x86_64-linux')
 
       expect_any_instance_of(subject)
           .to(receive(:mkdir_p).with('somewhere/important'))
@@ -198,7 +489,7 @@ describe RakeDependencies::Tasks::Install do
 
     it 'uses an extension of .tgz when type is tgz' do
       define_task do |t|
-        t.os_ids = {mac: 'darwin', linux: 'linux64'}
+        t.platform_os_names = {darwin: 'darwin', linux: 'linux64'}
         t.path = 'some/path'
         t.type = :tgz
         t.binary_name_template = 'binary-from<%= @ext %>'
@@ -207,7 +498,7 @@ describe RakeDependencies::Tasks::Install do
       stub_cp
       stub_mkdir_p
 
-      set_platform_to('linux')
+      set_platform_to('x86_64-linux')
 
       expect_any_instance_of(subject)
           .to(receive(:mkdir_p).with('somewhere/important'))
@@ -220,7 +511,7 @@ describe RakeDependencies::Tasks::Install do
 
     it 'uses an extension of .tar.gz when type is tar_gz' do
       define_task do |t|
-        t.os_ids = {mac: 'darwin', linux: 'linux64'}
+        t.platform_os_names = {darwin: 'darwin', linux: 'linux64'}
         t.path = 'some/path'
         t.type = :tar_gz
         t.binary_name_template = 'binary-from<%= @ext %>'
@@ -229,7 +520,7 @@ describe RakeDependencies::Tasks::Install do
       stub_cp
       stub_mkdir_p
 
-      set_platform_to('linux')
+      set_platform_to('x86_64-linux')
 
       expect_any_instance_of(subject)
           .to(receive(:mkdir_p).with('somewhere/important'))
@@ -244,14 +535,14 @@ describe RakeDependencies::Tasks::Install do
       define_task { |t|
         t.path = 'some/path'
         t.binary_directory = 'binaries'
-        t.binary_name_template = '<%= @os_id %>'
+        t.binary_name_template = '<%= @platform_os_name %>'
         t.installation_directory = 'somewhere/important'
       }
 
       stub_cp
       stub_mkdir_p
 
-      set_platform_to('linux')
+      set_platform_to('x86_64-linux')
 
       expect_any_instance_of(subject)
           .to(receive(:mkdir_p).with('somewhere/important'))
@@ -273,7 +564,7 @@ describe RakeDependencies::Tasks::Install do
       stub_cp
       stub_mkdir_p
 
-      set_platform_to('linux')
+      set_platform_to('x86_64-linux')
 
       expect_any_instance_of(subject)
           .to(receive(:mkdir_p).with('somewhere/important'))

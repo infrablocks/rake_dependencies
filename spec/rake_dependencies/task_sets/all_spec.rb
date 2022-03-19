@@ -12,9 +12,9 @@ describe RakeDependencies::TaskSets::All do
         path: 'vendor/dependency',
         uri_template:
             'https://example.com/<%= @version %>/' +
-                'super-cool-tool-<%= @os_id %>' +
-                '-x86_64<%= @ext %>',
-        file_name_template: 'super-cool-tool-<%= @os_id %><%= @ext %>',
+                'super-cool-tool-<%= @platform_os_name %>' +
+                '-<%= @platform_cpu_name %><%= @ext %>',
+        file_name_template: 'super-cool-tool-<%= @platform_os_name %><%= @ext %>',
         needs_fetch: lambda { |_| true }
     }.merge(opts), &block)
   end
@@ -152,22 +152,40 @@ describe RakeDependencies::TaskSets::All do
           .to(eq(file_name_template))
     end
 
-    it 'passes the default os_ids when none supplied' do
+    it 'passes the default platform OS names when none supplied' do
       define_tasks
 
       download_task = Rake::Task["some_namespace:download"]
 
-      expect(download_task.creator.os_ids)
-          .to(eq({mac: 'mac', linux: 'linux'}))
+      expect(download_task.creator.platform_os_names)
+          .to(eq(RakeDependencies::PlatformNames::OS))
     end
 
-    it 'passes the provided os_ids when supplied' do
-      define_tasks(os_ids: {mac: 'darwin', linux: 'linux64'})
+    it 'passes the provided platform OS names when supplied' do
+      define_tasks(platform_os_names: {darwin: 'mac', linux: 'linux64'})
 
       download_task = Rake::Task["some_namespace:download"]
 
-      expect(download_task.creator.os_ids)
-          .to(eq({mac: 'darwin', linux: 'linux64'}))
+      expect(download_task.creator.platform_os_names)
+          .to(eq({darwin: 'mac', linux: 'linux64'}))
+    end
+
+    it 'passes the default platform CPU names when none supplied' do
+      define_tasks
+
+      download_task = Rake::Task["some_namespace:download"]
+
+      expect(download_task.creator.platform_cpu_names)
+        .to(eq(RakeDependencies::PlatformNames::CPU))
+    end
+
+    it 'passes the provided platform CPU names when supplied' do
+      define_tasks(platform_cpu_names: {i686: 'x86', arm: 'armv4'})
+
+      download_task = Rake::Task["some_namespace:download"]
+
+      expect(download_task.creator.platform_cpu_names)
+        .to(eq({i686: 'x86', arm: 'armv4'}))
     end
 
     it 'passes the default distribution_directory when none supplied' do
@@ -244,21 +262,40 @@ describe RakeDependencies::TaskSets::All do
           .to(eq(file_name_template))
     end
 
-    it 'passes the default os_ids when none supplied' do
+    it 'passes the default platform OS names when none supplied' do
       define_tasks
 
       extract_task = Rake::Task["some_namespace:extract"]
 
-      expect(extract_task.creator.os_ids).to(eq({mac: 'mac', linux: 'linux'}))
+      expect(extract_task.creator.platform_os_names)
+        .to(eq(RakeDependencies::PlatformNames::OS))
     end
 
-    it 'passes the provided os_ids when supplied' do
-      define_tasks(os_ids: {mac: 'darwin', linux: 'linux64'})
+    it 'passes the provided platform OS names when supplied' do
+      define_tasks(platform_os_names: {darwin: 'mac', linux: 'linux64'})
 
       extract_task = Rake::Task["some_namespace:extract"]
 
-      expect(extract_task.creator.os_ids)
-          .to(eq({mac: 'darwin', linux: 'linux64'}))
+      expect(extract_task.creator.platform_os_names)
+        .to(eq({darwin: 'mac', linux: 'linux64'}))
+    end
+
+    it 'passes the default platform CPU names when none supplied' do
+      define_tasks
+
+      extract_task = Rake::Task["some_namespace:extract"]
+
+      expect(extract_task.creator.platform_cpu_names)
+        .to(eq(RakeDependencies::PlatformNames::CPU))
+    end
+
+    it 'passes the provided platform CPU names when supplied' do
+      define_tasks(platform_cpu_names: {i686: 'x86', arm: 'armv4'})
+
+      extract_task = Rake::Task["some_namespace:extract"]
+
+      expect(extract_task.creator.platform_cpu_names)
+        .to(eq({i686: 'x86', arm: 'armv4'}))
     end
 
     it 'passes the default distribution_directory when none supplied' do
@@ -393,24 +430,44 @@ describe RakeDependencies::TaskSets::All do
           .to(eq(target_binary_name_template))
     end
 
-    it 'passes the default os_ids when none supplied' do
+    it 'passes the default platform OS names when none supplied' do
       define_tasks(installation_directory: 'some/important/directory')
 
       install_task = Rake::Task["some_namespace:install"]
 
-      expect(install_task.creator.os_ids)
-          .to(eq({mac: 'mac', linux: 'linux'}))
+      expect(install_task.creator.platform_os_names)
+        .to(eq(RakeDependencies::PlatformNames::OS))
     end
 
-    it 'passes the provided os_ids when supplied' do
+    it 'passes the provided platform OS names when supplied' do
       define_tasks(
-          installation_directory: 'some/important/directory',
-          os_ids: {mac: 'darwin', linux: 'linux64'})
+        installation_directory: 'some/important/directory',
+        platform_os_names: {darwin: 'mac', linux: 'linux64'})
 
       install_task = Rake::Task["some_namespace:install"]
 
-      expect(install_task.creator.os_ids)
-          .to(eq({mac: 'darwin', linux: 'linux64'}))
+      expect(install_task.creator.platform_os_names)
+        .to(eq({darwin: 'mac', linux: 'linux64'}))
+    end
+
+    it 'passes the default platform CPU names when none supplied' do
+      define_tasks(installation_directory: 'some/important/directory')
+
+      install_task = Rake::Task["some_namespace:install"]
+
+      expect(install_task.creator.platform_cpu_names)
+        .to(eq(RakeDependencies::PlatformNames::CPU))
+    end
+
+    it 'passes the provided platform CPU names when supplied' do
+      define_tasks(
+        installation_directory: 'some/important/directory',
+        platform_cpu_names: {i686: 'x86', arm: 'armv4'})
+
+      install_task = Rake::Task["some_namespace:install"]
+
+      expect(install_task.creator.platform_cpu_names)
+        .to(eq({i686: 'x86', arm: 'armv4'}))
     end
 
     it 'passes the default binary_directory when none supplied' do

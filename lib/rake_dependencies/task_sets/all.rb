@@ -19,7 +19,8 @@ module RakeDependencies
       parameter :path, required: true
       parameter :type, default: :zip
 
-      parameter :os_ids, default: {mac: 'mac', linux: 'linux'}
+      parameter :platform_cpu_names, default: PlatformNames::CPU
+      parameter :platform_os_names, default: PlatformNames::OS
 
       parameter :distribution_directory, default: 'dist'
       parameter :binary_directory, default: 'bin'

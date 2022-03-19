@@ -1,4 +1,7 @@
 require 'rake_factory'
+require 'rubygems'
+
+require_relative '../template'
 
 module RakeDependencies
   module Tasks
@@ -8,10 +11,8 @@ module RakeDependencies
         "Install #{t.dependency}"
       }
 
-      parameter :os_ids, default: {
-          mac: 'mac',
-          linux: 'linux'
-      }
+      parameter :platform_cpu_names, default: PlatformNames::CPU
+      parameter :platform_os_names, default: PlatformNames::OS
 
       parameter :dependency, required: true
       parameter :version
@@ -27,7 +28,8 @@ module RakeDependencies
         parameters = {
             version: version,
             platform: platform,
-            os_id: os_id,
+            platform_cpu_name: platform_cpu_name,
+            platform_os_name: platform_os_name,
             ext: ext
         }
 
@@ -42,16 +44,22 @@ module RakeDependencies
         cp binary_file_path, installation_directory
       end
 
-      def os_id
-        os_ids[platform]
-      end
+      private
 
       def platform
-        RUBY_PLATFORM =~ /darwin/ ? :mac : :linux
+        Gem::Platform.local
+      end
+
+      def platform_os_name
+        platform_os_names[platform.os.to_sym]
+      end
+
+      def platform_cpu_name
+        platform_cpu_names[platform.cpu.to_sym]
       end
 
       def resolved_type
-        type.is_a?(Hash) ? type[platform].to_sym : type.to_sym
+        type.is_a?(Hash) ? type[platform.os.to_sym].to_sym : type.to_sym
       end
 
       def ext
