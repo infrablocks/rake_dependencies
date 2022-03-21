@@ -1,6 +1,7 @@
 ## Standard stuff:
 *.gem
 *.rbc
+/build
 /.config
 /coverage/
 /InstalledFiles
@@ -18,7 +19,6 @@
 /_yardoc/
 /doc/
 /rdoc/
-/coverage/
 
 ## Environment normalization:
 /.bundle/
