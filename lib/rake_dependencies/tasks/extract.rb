@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'rake_factory'
 require 'zip'
 require 'rubygems'
@@ -9,9 +11,9 @@ module RakeDependencies
   module Tasks
     class Extract < RakeFactory::Task
       default_name :extract
-      default_description RakeFactory::DynamicValue.new { |t|
+      default_description(RakeFactory::DynamicValue.new do |t|
         "Extract #{t.dependency} archive"
-      }
+      end)
 
       parameter :type, default: :zip
 
@@ -19,10 +21,10 @@ module RakeDependencies
       parameter :platform_os_names, default: PlatformNames::OS
 
       parameter :extractors, default: {
-          zip: Extractors::ZipExtractor,
-          tar_gz: Extractors::TarGzExtractor,
-          tgz: Extractors::TarGzExtractor,
-          uncompressed: Extractors::UncompressedExtractor
+        zip: Extractors::ZipExtractor,
+        tar_gz: Extractors::TarGzExtractor,
+        tgz: Extractors::TarGzExtractor,
+        uncompressed: Extractors::UncompressedExtractor
       }
 
       parameter :distribution_directory, default: 'dist'
@@ -37,47 +39,69 @@ module RakeDependencies
       parameter :strip_path_template
 
       action do
-        parameters = {
-            version: version,
-            platform: platform,
-            platform_cpu_name: platform_cpu_name,
-            platform_os_name: platform_os_name,
-            ext: ext
-        }
-
-        distribution_file_name = Template.new(file_name_template)
-            .with_parameters(parameters)
-            .render
-        distribution_file_directory = File.join(path, distribution_directory)
+        distribution_file_name = interpolate_file_name_template(parameters)
+        distribution_file_directory = relative_to_path(distribution_directory)
         distribution_file_path = File.join(
-            distribution_file_directory, distribution_file_name)
+          distribution_file_directory, distribution_file_name
+        )
 
-        extraction_path = File.join(path, binary_directory)
+        extraction_path = relative_to_path(binary_directory)
 
         options = {}
         if strip_path_template
-          options[:strip_path] = Template.new(strip_path_template)
-              .with_parameters(parameters)
-              .render
+          options[:strip_path] = interpolate_strip_path_template(parameters)
         end
 
         if source_binary_name_template && target_binary_name_template
-          options[:rename_from] = Template.new(source_binary_name_template)
-              .with_parameters(parameters)
-              .render
-          options[:rename_to] = Template.new(target_binary_name_template)
-              .with_parameters(parameters)
-              .render
+          options[:rename_from] =
+            interpolate_source_binary_name_template(parameters)
+          options[:rename_to] =
+            interpolate_target_binary_name_template(parameters)
         end
 
         extractor = extractor_for_extension.new(
-            distribution_file_path,
-            extraction_path,
-            options)
+          distribution_file_path,
+          extraction_path,
+          options
+        )
         extractor.extract
       end
 
-      private
+      def parameters
+        {
+          version: version,
+          platform: platform,
+          platform_cpu_name: platform_cpu_name,
+          platform_os_name: platform_os_name,
+          ext: ext
+        }
+      end
+
+      def interpolate_template(template, parameters)
+        Template.new(template)
+                .with_parameters(parameters)
+                .render
+      end
+
+      def interpolate_file_name_template(parameters)
+        interpolate_template(file_name_template, parameters)
+      end
+
+      def interpolate_strip_path_template(parameters)
+        interpolate_template(strip_path_template, parameters)
+      end
+
+      def interpolate_source_binary_name_template(parameters)
+        interpolate_template(source_binary_name_template, parameters)
+      end
+
+      def interpolate_target_binary_name_template(parameters)
+        interpolate_template(target_binary_name_template, parameters)
+      end
+
+      def relative_to_path(other)
+        File.join(path, other)
+      end
 
       def extractor_for_extension
         extractors[resolved_type]
@@ -101,14 +125,10 @@ module RakeDependencies
 
       def ext
         case resolved_type
-        when :tar_gz then
-          '.tar.gz'
-        when :tgz then
-          '.tgz'
-        when :zip then
-          '.zip'
-        when :uncompressed then
-          ''
+        when :tar_gz then '.tar.gz'
+        when :tgz then '.tgz'
+        when :zip then '.zip'
+        when :uncompressed then ''
         else
           raise "Unknown type: #{type}"
         end

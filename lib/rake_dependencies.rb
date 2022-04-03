@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'rake_dependencies/tasks'
 require 'rake_dependencies/task_sets'
 require 'rake_dependencies/extractors'

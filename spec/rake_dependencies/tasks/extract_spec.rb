@@ -1,8 +1,11 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe RakeDependencies::Tasks::Extract do
-  include_context :rake
+  include_context 'rake'
 
+  # rubocop:disable Metrics/MethodLength
   def define_task(opts = {}, &block)
     namespace :dependency do
       subject.define({ dependency: 'some-dep' }.merge(opts)) do |t|
@@ -10,27 +13,20 @@ describe RakeDependencies::Tasks::Extract do
         t.path = 'vendor/dependency'
         t.version = '1.2.3'
         t.file_name_template =
-          'some-dep-<%= @platform_os_name %>-<%= @platform_cpu_name %><%= @ext %>'
-        block.call(t) if block
+          'some-dep-<%= @platform_os_name %>-<%= @platform_cpu_name %>'\
+          '<%= @ext %>'
+        block&.call(t)
       end
     end
   end
+  # rubocop:enable Metrics/MethodLength
 
-  def set_platform_to(string)
-    allow(Gem::Platform)
-      .to(receive(:local)
-            .and_return(Gem::Platform.new(string)))
-  end
-
-  def set_platform
-    set_platform_to('arm64-darwin-21')
-  end
-
-  context 'task definition' do
+  describe 'task definition' do
     it 'adds an extract task in the namespace in which it is created' do
       define_task
 
-      expect(Rake::Task['dependency:extract']).not_to be_nil
+      expect(Rake.application)
+        .to(have_task_defined('dependency:extract'))
     end
 
     it 'gives the extract task a description' do
@@ -44,387 +40,494 @@ describe RakeDependencies::Tasks::Extract do
       define_task(name: 'extract1')
       define_task(name: 'extract2')
 
-      expect(Rake::Task['dependency:extract1']).not_to be_nil
-      expect(Rake::Task['dependency:extract2']).not_to be_nil
+      expect(Rake.application)
+        .to(have_tasks_defined(
+              %w[dependency:extract1
+                 dependency:extract2]
+            ))
     end
   end
 
-  context 'parameters' do
+  describe 'parameters' do
     it 'allows the task name to be overridden' do
       define_task(name: :unarchive)
 
-      expect(Rake::Task['dependency:unarchive']).not_to be_nil
+      expect(Rake.application)
+        .to(have_task_defined('dependency:unarchive'))
     end
 
     it 'passes a platform CPU name of "amd64" for x86_64 by default' do
-      define_task { |t|
+      define_task do |t|
         t.path = 'some/path'
         t.distribution_directory = 'dist'
         t.file_name_template = '<%= @platform_cpu_name %>'
-      }
-      set_platform_to('x86_64-darwin')
+      end
+      use_platform('x86_64-darwin')
 
-      extractor = double('zip extractor', extract: nil)
+      extractor = instance_double(
+        RakeDependencies::Extractors::ZipExtractor,
+        extract: nil
+      )
 
-      expect(RakeDependencies::Extractors::ZipExtractor)
+      allow(RakeDependencies::Extractors::ZipExtractor)
         .to(receive(:new)
-              .with('some/path/dist/amd64', any_args)
               .and_return(extractor))
 
       Rake::Task['dependency:extract'].invoke
+
+      expect(RakeDependencies::Extractors::ZipExtractor)
+        .to(have_received(:new)
+              .with('some/path/dist/amd64', any_args))
     end
 
     it 'passes a platform CPU name of "amd64" for x64 by default' do
-      define_task { |t|
+      define_task do |t|
         t.path = 'some/path'
         t.distribution_directory = 'dist'
         t.file_name_template = '<%= @platform_cpu_name %>'
-      }
-      set_platform_to('x64-linux')
+      end
+      use_platform('x64-linux')
 
-      extractor = double('zip extractor', extract: nil)
+      extractor = instance_double(
+        RakeDependencies::Extractors::ZipExtractor,
+        extract: nil
+      )
 
-      expect(RakeDependencies::Extractors::ZipExtractor)
-        .to(receive(:new)
-              .with('some/path/dist/amd64', any_args)
-              .and_return(extractor))
+      allow(RakeDependencies::Extractors::ZipExtractor)
+        .to(receive(:new).and_return(extractor))
 
       Rake::Task['dependency:extract'].invoke
+
+      expect(RakeDependencies::Extractors::ZipExtractor)
+        .to(have_received(:new)
+              .with('some/path/dist/amd64', any_args))
     end
 
     it 'passes a platform CPU name of "386" for x86 by default' do
-      define_task { |t|
+      define_task do |t|
         t.path = 'some/path'
         t.distribution_directory = 'dist'
         t.file_name_template = '<%= @platform_cpu_name %>'
-      }
-      set_platform_to('x86-linux')
+      end
+      use_platform('x86-linux')
 
-      extractor = double('zip extractor', extract: nil)
+      extractor = instance_double(
+        RakeDependencies::Extractors::ZipExtractor,
+        extract: nil
+      )
 
-      expect(RakeDependencies::Extractors::ZipExtractor)
-        .to(receive(:new)
-              .with('some/path/dist/386', any_args)
-              .and_return(extractor))
+      allow(RakeDependencies::Extractors::ZipExtractor)
+        .to(receive(:new).and_return(extractor))
 
       Rake::Task['dependency:extract'].invoke
+
+      expect(RakeDependencies::Extractors::ZipExtractor)
+        .to(have_received(:new)
+              .with('some/path/dist/386', any_args))
     end
 
     it 'passes a platform CPU name of "arm" for arm by default' do
-      define_task { |t|
+      define_task do |t|
         t.path = 'some/path'
         t.distribution_directory = 'dist'
         t.file_name_template = '<%= @platform_cpu_name %>'
-      }
-      set_platform_to('arm-linux')
+      end
+      use_platform('arm-linux')
 
-      extractor = double('zip extractor', extract: nil)
+      extractor = instance_double(
+        RakeDependencies::Extractors::ZipExtractor,
+        extract: nil
+      )
 
-      expect(RakeDependencies::Extractors::ZipExtractor)
-        .to(receive(:new)
-              .with('some/path/dist/arm', any_args)
-              .and_return(extractor))
+      allow(RakeDependencies::Extractors::ZipExtractor)
+        .to(receive(:new).and_return(extractor))
 
       Rake::Task['dependency:extract'].invoke
+
+      expect(RakeDependencies::Extractors::ZipExtractor)
+        .to(have_received(:new)
+              .with('some/path/dist/arm', any_args))
     end
 
     it 'passes a platform CPU name of "arm64" for arm64 by default' do
-      define_task { |t|
+      define_task do |t|
         t.path = 'some/path'
         t.distribution_directory = 'dist'
         t.file_name_template = '<%= @platform_cpu_name %>'
-      }
-      set_platform_to('arm64-darwin-21')
+      end
+      use_platform('arm64-darwin-21')
 
-      extractor = double('zip extractor', extract: nil)
+      extractor = instance_double(
+        RakeDependencies::Extractors::ZipExtractor,
+        extract: nil
+      )
 
-      expect(RakeDependencies::Extractors::ZipExtractor)
-        .to(receive(:new)
-              .with('some/path/dist/arm64', any_args)
-              .and_return(extractor))
+      allow(RakeDependencies::Extractors::ZipExtractor)
+        .to(receive(:new).and_return(extractor))
 
       Rake::Task['dependency:extract'].invoke
+
+      expect(RakeDependencies::Extractors::ZipExtractor)
+        .to(have_received(:new)
+              .with('some/path/dist/arm64', any_args))
     end
 
     it 'passes the provided platform CPU name for x86_64 when present' do
-      define_task { |t|
+      # rubocop:disable Naming/VariableNumber
+      define_task do |t|
         t.path = 'some/path'
         t.distribution_directory = 'dist'
         t.platform_cpu_names = { x86_64: 'x86_64' }
         t.file_name_template = '<%= @platform_cpu_name %>'
-      }
-      set_platform_to('x86_64-darwin')
+      end
+      # rubocop:enable Naming/VariableNumber
+      use_platform('x86_64-darwin')
 
-      extractor = double('zip extractor', extract: nil)
+      extractor = instance_double(
+        RakeDependencies::Extractors::ZipExtractor,
+        extract: nil
+      )
 
-      expect(RakeDependencies::Extractors::ZipExtractor)
-        .to(receive(:new)
-              .with('some/path/dist/x86_64', any_args)
-              .and_return(extractor))
+      allow(RakeDependencies::Extractors::ZipExtractor)
+        .to(receive(:new).and_return(extractor))
 
       Rake::Task['dependency:extract'].invoke
+
+      expect(RakeDependencies::Extractors::ZipExtractor)
+        .to(have_received(:new)
+              .with('some/path/dist/x86_64', any_args))
     end
 
     it 'passes the provided platform CPU name for x64 when present' do
-      define_task { |t|
+      define_task do |t|
         t.path = 'some/path'
         t.distribution_directory = 'dist'
         t.platform_cpu_names = { x64: 'x86_64' }
         t.file_name_template = '<%= @platform_cpu_name %>'
-      }
-      set_platform_to('x64-linux')
+      end
+      use_platform('x64-linux')
 
-      extractor = double('zip extractor', extract: nil)
+      extractor = instance_double(
+        RakeDependencies::Extractors::ZipExtractor,
+        extract: nil
+      )
 
-      expect(RakeDependencies::Extractors::ZipExtractor)
-        .to(receive(:new)
-              .with('some/path/dist/x86_64', any_args)
-              .and_return(extractor))
+      allow(RakeDependencies::Extractors::ZipExtractor)
+        .to(receive(:new).and_return(extractor))
 
       Rake::Task['dependency:extract'].invoke
+
+      expect(RakeDependencies::Extractors::ZipExtractor)
+        .to(have_received(:new)
+              .with('some/path/dist/x86_64', any_args))
     end
 
     it 'passes the provided platform CPU name for x86 when present' do
-      define_task { |t|
+      define_task do |t|
         t.path = 'some/path'
         t.distribution_directory = 'dist'
         t.platform_cpu_names = { x86: 'x86' }
         t.file_name_template = '<%= @platform_cpu_name %>'
-      }
-      set_platform_to('x86-linux')
+      end
+      use_platform('x86-linux')
 
-      extractor = double('zip extractor', extract: nil)
+      extractor = instance_double(
+        RakeDependencies::Extractors::ZipExtractor,
+        extract: nil
+      )
 
-      expect(RakeDependencies::Extractors::ZipExtractor)
-        .to(receive(:new)
-              .with('some/path/dist/x86', any_args)
-              .and_return(extractor))
+      allow(RakeDependencies::Extractors::ZipExtractor)
+        .to(receive(:new).and_return(extractor))
 
       Rake::Task['dependency:extract'].invoke
+
+      expect(RakeDependencies::Extractors::ZipExtractor)
+        .to(have_received(:new)
+              .with('some/path/dist/x86', any_args))
     end
 
     it 'passes the provided platform CPU name for arm when present' do
-      define_task { |t|
+      define_task do |t|
         t.path = 'some/path'
         t.distribution_directory = 'dist'
         t.platform_cpu_names = { arm: 'armv4' }
         t.file_name_template = '<%= @platform_cpu_name %>'
-      }
-      set_platform_to('arm-linux')
+      end
+      use_platform('arm-linux')
 
-      extractor = double('zip extractor', extract: nil)
+      extractor = instance_double(
+        RakeDependencies::Extractors::ZipExtractor,
+        extract: nil
+      )
 
-      expect(RakeDependencies::Extractors::ZipExtractor)
-        .to(receive(:new)
-              .with('some/path/dist/armv4', any_args)
-              .and_return(extractor))
+      allow(RakeDependencies::Extractors::ZipExtractor)
+        .to(receive(:new).and_return(extractor))
 
       Rake::Task['dependency:extract'].invoke
+
+      expect(RakeDependencies::Extractors::ZipExtractor)
+        .to(have_received(:new)
+              .with('some/path/dist/armv4', any_args))
     end
 
     it 'passes the provided platform CPU name for arm64 when present' do
-      define_task { |t|
+      define_task do |t|
         t.path = 'some/path'
         t.distribution_directory = 'dist'
         t.platform_cpu_names = { arm64: 'armv9' }
         t.file_name_template = '<%= @platform_cpu_name %>'
-      }
-      set_platform_to('arm64-darwin-21')
+      end
+      use_platform('arm64-darwin-21')
 
-      extractor = double('zip extractor', extract: nil)
+      extractor = instance_double(
+        RakeDependencies::Extractors::ZipExtractor,
+        extract: nil
+      )
 
-      expect(RakeDependencies::Extractors::ZipExtractor)
-        .to(receive(:new)
-              .with('some/path/dist/armv9', any_args)
-              .and_return(extractor))
+      allow(RakeDependencies::Extractors::ZipExtractor)
+        .to(receive(:new).and_return(extractor))
 
       Rake::Task['dependency:extract'].invoke
+
+      expect(RakeDependencies::Extractors::ZipExtractor)
+        .to(have_received(:new)
+              .with('some/path/dist/armv9', any_args))
     end
 
     it 'passes the provided platform CPU name for another arch when present' do
-      define_task { |t|
+      define_task do |t|
         t.path = 'some/path'
         t.distribution_directory = 'dist'
         t.platform_cpu_names = { powerpc: 'powerpc' }
         t.file_name_template = '<%= @platform_cpu_name %>'
-      }
-      set_platform_to('powerpc-linux')
+      end
+      use_platform('powerpc-linux')
 
-      extractor = double('zip extractor', extract: nil)
+      extractor = instance_double(
+        RakeDependencies::Extractors::ZipExtractor,
+        extract: nil
+      )
 
-      expect(RakeDependencies::Extractors::ZipExtractor)
-        .to(receive(:new)
-              .with('some/path/dist/powerpc', any_args)
-              .and_return(extractor))
+      allow(RakeDependencies::Extractors::ZipExtractor)
+        .to(receive(:new).and_return(extractor))
 
       Rake::Task['dependency:extract'].invoke
+
+      expect(RakeDependencies::Extractors::ZipExtractor)
+        .to(have_received(:new)
+              .with('some/path/dist/powerpc', any_args))
     end
 
     it 'passes a platform OS name of "darwin" on darwin by default' do
-      define_task { |t|
+      define_task do |t|
         t.path = 'some/path'
         t.distribution_directory = 'dist'
         t.file_name_template = '<%= @platform_os_name %>'
-      }
-      set_platform_to('arm64-darwin-21')
+      end
+      use_platform('arm64-darwin-21')
 
-      extractor = double('zip extractor', extract: nil)
+      extractor = instance_double(
+        RakeDependencies::Extractors::ZipExtractor,
+        extract: nil
+      )
 
-      expect(RakeDependencies::Extractors::ZipExtractor)
-        .to(receive(:new)
-              .with('some/path/dist/darwin', any_args)
-              .and_return(extractor))
+      allow(RakeDependencies::Extractors::ZipExtractor)
+        .to(receive(:new).and_return(extractor))
 
       Rake::Task['dependency:extract'].invoke
+
+      expect(RakeDependencies::Extractors::ZipExtractor)
+        .to(have_received(:new)
+              .with('some/path/dist/darwin', any_args))
     end
 
     it 'passes a platform OS name of "linux" on linux by default' do
-      define_task { |t|
+      define_task do |t|
         t.path = 'some/path'
         t.distribution_directory = 'dist'
         t.file_name_template = '<%= @platform_os_name %>'
-      }
-      set_platform_to('x86_64-linux')
+      end
+      use_platform('x86_64-linux')
 
-      extractor = double('zip extractor', extract: nil)
+      extractor = instance_double(
+        RakeDependencies::Extractors::ZipExtractor,
+        extract: nil
+      )
 
-      expect(RakeDependencies::Extractors::ZipExtractor)
-        .to(receive(:new)
-              .with('some/path/dist/linux', any_args)
-              .and_return(extractor))
+      allow(RakeDependencies::Extractors::ZipExtractor)
+        .to(receive(:new).and_return(extractor))
 
       Rake::Task['dependency:extract'].invoke
+
+      expect(RakeDependencies::Extractors::ZipExtractor)
+        .to(have_received(:new)
+              .with('some/path/dist/linux', any_args))
     end
 
     it 'passes a platform OS name of "windows" on mswin32 by default' do
-      define_task { |t|
+      define_task do |t|
         t.path = 'some/path'
         t.distribution_directory = 'dist'
         t.file_name_template = '<%= @platform_os_name %>'
-      }
-      set_platform_to('x86-mswin32')
+      end
+      use_platform('x86-mswin32')
 
-      extractor = double('zip extractor', extract: nil)
+      extractor = instance_double(
+        RakeDependencies::Extractors::ZipExtractor,
+        extract: nil
+      )
 
-      expect(RakeDependencies::Extractors::ZipExtractor)
-        .to(receive(:new)
-              .with('some/path/dist/windows', any_args)
-              .and_return(extractor))
+      allow(RakeDependencies::Extractors::ZipExtractor)
+        .to(receive(:new).and_return(extractor))
 
       Rake::Task['dependency:extract'].invoke
+
+      expect(RakeDependencies::Extractors::ZipExtractor)
+        .to(have_received(:new)
+              .with('some/path/dist/windows', any_args))
     end
 
     it 'passes a platform OS name of "windows" on mswin64 by default' do
-      define_task { |t|
+      define_task do |t|
         t.path = 'some/path'
         t.distribution_directory = 'dist'
         t.file_name_template = '<%= @platform_os_name %>'
-      }
-      set_platform_to('x86_64-mswin64')
+      end
+      use_platform('x86_64-mswin64')
 
-      extractor = double('zip extractor', extract: nil)
+      extractor = instance_double(
+        RakeDependencies::Extractors::ZipExtractor,
+        extract: nil
+      )
 
-      expect(RakeDependencies::Extractors::ZipExtractor)
-        .to(receive(:new)
-              .with('some/path/dist/windows', any_args)
-              .and_return(extractor))
+      allow(RakeDependencies::Extractors::ZipExtractor)
+        .to(receive(:new).and_return(extractor))
 
       Rake::Task['dependency:extract'].invoke
+
+      expect(RakeDependencies::Extractors::ZipExtractor)
+        .to(have_received(:new)
+              .with('some/path/dist/windows', any_args))
     end
 
     it 'passes the provided platform OS name for darwin when present' do
-      define_task { |t|
+      define_task do |t|
         t.path = 'some/path'
         t.distribution_directory = 'dist'
         t.platform_os_names = { darwin: 'mac' }
         t.file_name_template = '<%= @platform_os_name %>'
-      }
-      set_platform_to('x86_64-darwin')
+      end
+      use_platform('x86_64-darwin')
 
-      extractor = double('zip extractor', extract: nil)
+      extractor = instance_double(
+        RakeDependencies::Extractors::ZipExtractor,
+        extract: nil
+      )
 
-      expect(RakeDependencies::Extractors::ZipExtractor)
-        .to(receive(:new)
-              .with('some/path/dist/mac', any_args)
-              .and_return(extractor))
+      allow(RakeDependencies::Extractors::ZipExtractor)
+        .to(receive(:new).and_return(extractor))
 
       Rake::Task['dependency:extract'].invoke
+
+      expect(RakeDependencies::Extractors::ZipExtractor)
+        .to(have_received(:new)
+              .with('some/path/dist/mac', any_args))
     end
 
     it 'passes the provided platform OS name for linux when present' do
-      define_task { |t|
+      define_task do |t|
         t.path = 'some/path'
         t.distribution_directory = 'dist'
         t.platform_os_names = { linux: 'linux64' }
         t.file_name_template = '<%= @platform_os_name %>'
-      }
-      set_platform_to('x86_64-linux')
+      end
+      use_platform('x86_64-linux')
 
-      extractor = double('zip extractor', extract: nil)
+      extractor = instance_double(
+        RakeDependencies::Extractors::ZipExtractor,
+        extract: nil
+      )
 
-      expect(RakeDependencies::Extractors::ZipExtractor)
-        .to(receive(:new)
-              .with('some/path/dist/linux64', any_args)
-              .and_return(extractor))
+      allow(RakeDependencies::Extractors::ZipExtractor)
+        .to(receive(:new).and_return(extractor))
 
       Rake::Task['dependency:extract'].invoke
+
+      expect(RakeDependencies::Extractors::ZipExtractor)
+        .to(have_received(:new)
+              .with('some/path/dist/linux64', any_args))
     end
 
     it 'passes the provided platform OS name for mswin32 when present' do
-      define_task { |t|
+      define_task do |t|
         t.path = 'some/path'
         t.distribution_directory = 'dist'
         t.platform_os_names = { mswin32: 'mswin32' }
         t.file_name_template = '<%= @platform_os_name %>'
-      }
-      set_platform_to('i686-mswin32')
+      end
+      use_platform('i686-mswin32')
 
-      extractor = double('zip extractor', extract: nil)
+      extractor = instance_double(
+        RakeDependencies::Extractors::ZipExtractor,
+        extract: nil
+      )
 
-      expect(RakeDependencies::Extractors::ZipExtractor)
-        .to(receive(:new)
-              .with('some/path/dist/mswin32', any_args)
-              .and_return(extractor))
+      allow(RakeDependencies::Extractors::ZipExtractor)
+        .to(receive(:new).and_return(extractor))
 
       Rake::Task['dependency:extract'].invoke
+
+      expect(RakeDependencies::Extractors::ZipExtractor)
+        .to(have_received(:new)
+              .with('some/path/dist/mswin32', any_args))
     end
 
     it 'passes the provided platform OS name for mswin64 when present' do
-      define_task { |t|
+      define_task do |t|
         t.path = 'some/path'
         t.distribution_directory = 'dist'
         t.platform_os_names = { mswin64: 'mswin64' }
         t.file_name_template = '<%= @platform_os_name %>'
-      }
-      set_platform_to('x64-mswin64')
+      end
+      use_platform('x64-mswin64')
 
-      extractor = double('zip extractor', extract: nil)
+      extractor = instance_double(
+        RakeDependencies::Extractors::ZipExtractor,
+        extract: nil
+      )
 
-      expect(RakeDependencies::Extractors::ZipExtractor)
-        .to(receive(:new)
-              .with('some/path/dist/mswin64', any_args)
-              .and_return(extractor))
+      allow(RakeDependencies::Extractors::ZipExtractor)
+        .to(receive(:new).and_return(extractor))
 
       Rake::Task['dependency:extract'].invoke
+
+      expect(RakeDependencies::Extractors::ZipExtractor)
+        .to(have_received(:new)
+              .with('some/path/dist/mswin64', any_args))
     end
 
     it 'passes the provided platform OS name for another OS when present' do
-      define_task { |t|
+      define_task do |t|
         t.path = 'some/path'
         t.distribution_directory = 'dist'
         t.platform_os_names = { aix: 'aix' }
         t.file_name_template = '<%= @platform_os_name %>'
-      }
-      set_platform_to('x86-aix')
+      end
+      use_platform('x86-aix')
 
-      extractor = double('zip extractor', extract: nil)
+      extractor = instance_double(
+        RakeDependencies::Extractors::ZipExtractor,
+        extract: nil
+      )
 
-      expect(RakeDependencies::Extractors::ZipExtractor)
-        .to(receive(:new)
-              .with('some/path/dist/aix', any_args)
-              .and_return(extractor))
+      allow(RakeDependencies::Extractors::ZipExtractor)
+        .to(receive(:new).and_return(extractor))
 
       Rake::Task['dependency:extract'].invoke
+
+      expect(RakeDependencies::Extractors::ZipExtractor)
+        .to(have_received(:new)
+              .with('some/path/dist/aix', any_args))
     end
 
     it 'uses an extension of .zip when type is zip' do
@@ -432,16 +535,21 @@ describe RakeDependencies::Tasks::Extract do
         t.type = :zip
         t.file_name_template = 'file<%= @ext %>'
       end
-      set_platform
+      use_default_platform
 
-      extractor = double('zip extractor', extract: nil)
+      extractor = instance_double(
+        RakeDependencies::Extractors::ZipExtractor,
+        extract: nil
+      )
 
-      expect(RakeDependencies::Extractors::ZipExtractor)
-        .to(receive(:new)
-              .with('vendor/dependency/dist/file.zip', any_args)
-              .and_return(extractor))
+      allow(RakeDependencies::Extractors::ZipExtractor)
+        .to(receive(:new).and_return(extractor))
 
       Rake::Task['dependency:extract'].invoke
+
+      expect(RakeDependencies::Extractors::ZipExtractor)
+        .to(have_received(:new)
+              .with('vendor/dependency/dist/file.zip', any_args))
     end
 
     it 'uses an extension of .tgz when type is tgz' do
@@ -449,16 +557,21 @@ describe RakeDependencies::Tasks::Extract do
         t.type = :tgz
         t.file_name_template = 'file<%= @ext %>'
       end
-      set_platform
+      use_default_platform
 
-      extractor = double('tgz extractor', extract: nil)
+      extractor = instance_double(
+        RakeDependencies::Extractors::ZipExtractor,
+        extract: nil
+      )
 
-      expect(RakeDependencies::Extractors::TarGzExtractor)
-        .to(receive(:new)
-              .with('vendor/dependency/dist/file.tgz', any_args)
-              .and_return(extractor))
+      allow(RakeDependencies::Extractors::TarGzExtractor)
+        .to(receive(:new).and_return(extractor))
 
       Rake::Task['dependency:extract'].invoke
+
+      expect(RakeDependencies::Extractors::TarGzExtractor)
+        .to(have_received(:new)
+              .with('vendor/dependency/dist/file.tgz', any_args))
     end
 
     it 'uses an extension of .tar.gz when type is tar_gz' do
@@ -466,65 +579,88 @@ describe RakeDependencies::Tasks::Extract do
         t.type = :tar_gz
         t.file_name_template = 'file<%= @ext %>'
       end
-      set_platform
+      use_default_platform
 
-      extractor = double('tgz extractor', extract: nil)
+      extractor = instance_double(
+        RakeDependencies::Extractors::ZipExtractor,
+        extract: nil
+      )
 
-      expect(RakeDependencies::Extractors::TarGzExtractor)
-        .to(receive(:new)
-              .with('vendor/dependency/dist/file.tar.gz', any_args)
-              .and_return(extractor))
+      allow(RakeDependencies::Extractors::TarGzExtractor)
+        .to(receive(:new).and_return(extractor))
 
       Rake::Task['dependency:extract'].invoke
+
+      expect(RakeDependencies::Extractors::TarGzExtractor)
+        .to(have_received(:new)
+              .with('vendor/dependency/dist/file.tar.gz', any_args))
     end
 
-    it 'uses the provided platform specific extension when a map is passed as the type' do
+    it 'uses the provided platform specific extension when a map is passed '\
+       'as the type' do
       define_task do |t|
         t.type = { darwin: :zip, linux: :tar_gz }
         t.file_name_template = 'file<%= @ext %>'
       end
-      set_platform_to('x86_64-linux')
+      use_platform('x86_64-linux')
 
-      extractor = double('tgz extractor', extract: nil)
+      extractor = instance_double(
+        RakeDependencies::Extractors::ZipExtractor,
+        extract: nil
+      )
 
-      expect(RakeDependencies::Extractors::TarGzExtractor)
-        .to(receive(:new)
-              .with('vendor/dependency/dist/file.tar.gz', any_args)
-              .and_return(extractor))
+      allow(RakeDependencies::Extractors::TarGzExtractor)
+        .to(receive(:new).and_return(extractor))
 
       Rake::Task['dependency:extract'].invoke
+
+      expect(RakeDependencies::Extractors::TarGzExtractor)
+        .to(have_received(:new)
+              .with('vendor/dependency/dist/file.tar.gz', any_args))
     end
 
     it 'allows the distribution directory to be overridden' do
-      define_task { |t|
+      define_task do |t|
         t.distribution_directory = 'spinach'
-      }
-      set_platform
+      end
+      use_default_platform
 
-      extractor = double('zip extractor', extract: nil)
+      extractor = instance_double(
+        RakeDependencies::Extractors::ZipExtractor,
+        extract: nil
+      )
 
-      expect(RakeDependencies::Extractors::ZipExtractor)
-        .to(receive(:new)
-              .with('vendor/dependency/spinach/some-dep-darwin-arm64.zip', anything, anything)
-              .and_return(extractor))
+      allow(RakeDependencies::Extractors::ZipExtractor)
+        .to(receive(:new).and_return(extractor))
 
       Rake::Task['dependency:extract'].invoke
+
+      expect(RakeDependencies::Extractors::ZipExtractor)
+        .to(have_received(:new)
+              .with('vendor/dependency/spinach/some-dep-darwin-arm64.zip',
+                    anything,
+                    anything))
     end
 
     it 'allows the binary directory to be overridden' do
-      define_task { |t|
+      define_task do |t|
         t.binary_directory = 'cabbage'
-      }
-      set_platform
+      end
+      use_default_platform
 
-      extractor = double('zip extractor', extract: nil)
+      extractor = instance_double(
+        RakeDependencies::Extractors::ZipExtractor,
+        extract: nil
+      )
 
-      expect(RakeDependencies::Extractors::ZipExtractor)
-        .to(receive(:new)
-              .with(anything, 'vendor/dependency/cabbage', anything)
-              .and_return(extractor))
+      allow(RakeDependencies::Extractors::ZipExtractor)
+        .to(receive(:new).and_return(extractor))
 
       Rake::Task['dependency:extract'].invoke
+
+      expect(RakeDependencies::Extractors::ZipExtractor)
+        .to(have_received(:new)
+              .with(anything, 'vendor/dependency/cabbage', anything))
     end
 
     it 'raises an error when an unknown type is supplied' do
@@ -532,57 +668,73 @@ describe RakeDependencies::Tasks::Extract do
         t.type = :wat
         t.file_name_template = '<%= @ext %>'
       end
-      set_platform
+      use_default_platform
 
-      expect {
+      expect do
         Rake::Task['dependency:extract'].invoke
-      }.to raise_error(RuntimeError, 'Unknown type: wat')
+      end.to raise_error(RuntimeError, 'Unknown type: wat')
     end
   end
 
-  context 'zipped distributions' do
+  describe 'zipped distributions' do
+    # rubocop:disable RSpec/MultipleExpectations
     it 'extracts the contents of the zip file to the extract path' do
       define_task { |t| t.type = :zip }
-      set_platform
+      use_default_platform
 
-      extractor = double('zip extractor')
+      extractor = instance_double(
+        RakeDependencies::Extractors::ZipExtractor
+      )
+
+      allow(RakeDependencies::Extractors::ZipExtractor)
+        .to(receive(:new).and_return(extractor))
+      allow(extractor).to(receive(:extract))
+
+      Rake::Task['dependency:extract'].invoke
 
       expect(RakeDependencies::Extractors::ZipExtractor)
-        .to(receive(:new)
+        .to(have_received(:new)
               .with(
                 'vendor/dependency/dist/some-dep-darwin-arm64.zip',
                 'vendor/dependency/bin',
-                anything)
-              .and_return(extractor))
-      expect(extractor)
-        .to(receive(:extract))
-
-      Rake::Task['dependency:extract'].invoke
+                anything
+              ))
+      expect(extractor).to(have_received(:extract))
     end
+    # rubocop:enable RSpec/MultipleExpectations
   end
 
-  context 'tarred and gzipped distributions' do
+  describe 'tarred and gzipped distributions' do
+    # rubocop:disable RSpec/MultipleExpectations
     it 'extracts the contents of the tgz file to the extract path' do
       define_task { |t| t.type = :tar_gz }
-      set_platform
+      use_default_platform
 
-      extractor = double('tgz extractor')
+      extractor = instance_double(
+        RakeDependencies::Extractors::TarGzExtractor,
+        extract: nil
+      )
+
+      allow(RakeDependencies::Extractors::TarGzExtractor)
+        .to(receive(:new).and_return(extractor))
+      allow(extractor).to(receive(:extract))
+
+      Rake::Task['dependency:extract'].invoke
 
       expect(RakeDependencies::Extractors::TarGzExtractor)
-        .to(receive(:new)
+        .to(have_received(:new)
               .with(
                 'vendor/dependency/dist/some-dep-darwin-arm64.tar.gz',
                 'vendor/dependency/bin',
-                anything)
-              .and_return(extractor))
-      expect(extractor)
-        .to(receive(:extract))
-
-      Rake::Task['dependency:extract'].invoke
+                anything
+              ))
+      expect(extractor).to(have_received(:extract))
     end
+    # rubocop:enable RSpec/MultipleExpectations
   end
 
-  context 'platform specific compressed distributions' do
+  describe 'platform specific compressed distributions' do
+    # rubocop:disable RSpec/MultipleExpectations
     it 'uses the specified mac extractor when on a mac platform' do
       define_task do |t|
         t.type = {
@@ -590,23 +742,30 @@ describe RakeDependencies::Tasks::Extract do
           linux: :tar_gz
         }
       end
-      set_platform_to('arm64-darwin-21')
+      use_platform('arm64-darwin-21')
 
-      extractor = double('zip extractor')
+      extractor = instance_double(
+        RakeDependencies::Extractors::ZipExtractor
+      )
+
+      allow(RakeDependencies::Extractors::ZipExtractor)
+        .to(receive(:new).and_return(extractor))
+      allow(extractor).to(receive(:extract))
+
+      Rake::Task['dependency:extract'].invoke
 
       expect(RakeDependencies::Extractors::ZipExtractor)
-        .to(receive(:new)
+        .to(have_received(:new)
               .with(
                 'vendor/dependency/dist/some-dep-darwin-arm64.zip',
                 'vendor/dependency/bin',
-                anything)
-              .and_return(extractor))
-      expect(extractor)
-        .to(receive(:extract))
-
-      Rake::Task['dependency:extract'].invoke
+                anything
+              ))
+      expect(extractor).to(have_received(:extract))
     end
+    # rubocop:enable RSpec/MultipleExpectations
 
+    # rubocop:disable RSpec/MultipleExpectations
     it 'uses the specified linux extractor when on a linux platform' do
       define_task do |t|
         t.type = {
@@ -614,65 +773,89 @@ describe RakeDependencies::Tasks::Extract do
           linux: :tar_gz
         }
       end
-      set_platform_to('x86_64-linux')
+      use_platform('x86_64-linux')
 
-      extractor = double('tgz extractor')
+      extractor = instance_double(
+        RakeDependencies::Extractors::TarGzExtractor,
+        extract: nil
+      )
+
+      allow(RakeDependencies::Extractors::TarGzExtractor)
+        .to(receive(:new).and_return(extractor))
+      allow(extractor).to(receive(:extract))
+
+      Rake::Task['dependency:extract'].invoke
 
       expect(RakeDependencies::Extractors::TarGzExtractor)
-        .to(receive(:new)
+        .to(have_received(:new)
               .with(
                 'vendor/dependency/dist/some-dep-linux-amd64.tar.gz',
                 'vendor/dependency/bin',
-                anything)
-              .and_return(extractor))
-      expect(extractor)
-        .to(receive(:extract))
-
-      Rake::Task['dependency:extract'].invoke
+                anything
+              ))
+      expect(extractor).to(have_received(:extract))
     end
+    # rubocop:enable RSpec/MultipleExpectations
   end
 
-  context 'uncompressed distributions' do
-    it 'copies the uncompressed distribution to the binary directory with the supplied name' do
+  describe 'uncompressed distributions' do
+    # rubocop:disable RSpec/MultipleExpectations
+    it 'copies the uncompressed distribution to the binary directory with '\
+       'the supplied name' do
       define_task do |t|
         t.type = :uncompressed
       end
-      set_platform_to('x86_64-linux')
+      use_platform('x86_64-linux')
 
-      extractor = double('tgz extractor')
+      extractor = instance_double(
+        RakeDependencies::Extractors::UncompressedExtractor,
+        extract: nil
+      )
+
+      allow(RakeDependencies::Extractors::UncompressedExtractor)
+        .to(receive(:new).and_return(extractor))
+      allow(extractor).to(receive(:extract))
+
+      Rake::Task['dependency:extract'].invoke
 
       expect(RakeDependencies::Extractors::UncompressedExtractor)
-        .to(receive(:new)
+        .to(have_received(:new)
               .with(
                 'vendor/dependency/dist/some-dep-linux-amd64',
                 'vendor/dependency/bin',
-                anything)
-              .and_return(extractor))
+                anything
+              ))
       expect(extractor)
-        .to(receive(:extract))
-
-      Rake::Task['dependency:extract'].invoke
+        .to(have_received(:extract))
     end
+    # rubocop:enable RSpec/MultipleExpectations
   end
 
-  context 'extraction options' do
+  describe 'extraction options' do
     it 'passes a strip path created using the supplied template when present' do
       define_task do |t|
         t.version = '0.1.0'
-        t.strip_path_template = "strip/<%= @version %>-<%= @platform_os_name %>"
+        t.strip_path_template =
+          'strip/<%= @version %>-<%= @platform_os_name %>'
       end
-      set_platform_to('x86_64-darwin')
+      use_platform('x86_64-darwin')
 
-      extractor = double('zip extractor', extract: nil)
+      extractor = instance_double(
+        RakeDependencies::Extractors::ZipExtractor,
+        extract: nil
+      )
 
-      expect(RakeDependencies::Extractors::ZipExtractor)
-        .to(receive(:new)
-              .with(anything, anything, { strip_path: 'strip/0.1.0-darwin' })
-              .and_return(extractor))
+      allow(RakeDependencies::Extractors::ZipExtractor)
+        .to(receive(:new).and_return(extractor))
 
       Rake::Task['dependency:extract'].invoke
+
+      expect(RakeDependencies::Extractors::ZipExtractor)
+        .to(have_received(:new)
+              .with(anything, anything, { strip_path: 'strip/0.1.0-darwin' }))
     end
 
+    # rubocop:disable RSpec/MultipleExpectations
     it 'passes the source and target binary names when present' do
       define_task do |t|
         t.type = :zip
@@ -680,23 +863,41 @@ describe RakeDependencies::Tasks::Extract do
         t.source_binary_name_template = 'binary.<%= @version %>'
         t.target_binary_name_template = 'binary.<%= @platform_os_name %>'
       end
-      set_platform_to('x86_64-linux')
+      use_platform('x86_64-linux')
 
-      extractor = double('zip extractor')
+      extractor = instance_double(
+        RakeDependencies::Extractors::ZipExtractor
+      )
 
-      expect(RakeDependencies::Extractors::ZipExtractor)
-        .to(receive(:new)
-              .with(
-                anything,
-                anything,
-                { rename_from: 'binary.1.2.3', rename_to: 'binary.linux' })
-              .and_return(extractor))
-      expect(extractor)
+      allow(RakeDependencies::Extractors::ZipExtractor)
+        .to(receive(:new).and_return(extractor))
+      allow(extractor)
         .to(receive(:extract))
 
       Rake::Task['dependency:extract'].invoke
+
+      expect(RakeDependencies::Extractors::ZipExtractor)
+        .to(have_received(:new)
+              .with(
+                anything,
+                anything,
+                { rename_from: 'binary.1.2.3', rename_to: 'binary.linux' }
+              ))
+      expect(extractor)
+        .to(have_received(:extract))
     end
+    # rubocop:enable RSpec/MultipleExpectations
   end
 
   # throws if required parameters are not supplied
+
+  def use_platform(string)
+    allow(Gem::Platform)
+      .to(receive(:local)
+            .and_return(Gem::Platform.new(string)))
+  end
+
+  def use_default_platform
+    use_platform('arm64-darwin-21')
+  end
 end

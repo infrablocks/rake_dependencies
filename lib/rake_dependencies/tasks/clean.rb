@@ -1,15 +1,17 @@
+# frozen_string_literal: true
+
 require 'rake_factory'
 
 module RakeDependencies
   module Tasks
     class Clean < RakeFactory::Task
       default_name :clean
-      default_description RakeFactory::DynamicValue.new { |t|
+      default_description(RakeFactory::DynamicValue.new do |t|
         "Clean vendored #{t.dependency}"
-      }
+      end)
 
-      parameter :dependency, :required => true
-      parameter :path, :required => true
+      parameter :dependency, required: true
+      parameter :path, required: true
 
       action do |t|
         rm_rf t.path

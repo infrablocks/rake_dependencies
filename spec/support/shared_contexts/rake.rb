@@ -1,21 +1,26 @@
+# frozen_string_literal: true
+
 require 'rake'
 require 'pp'
 require 'fakefs/spec_helpers'
 require 'active_support'
-require 'active_support/core_ext/string/inflections.rb'
+require 'active_support/core_ext/string/inflections'
 
-shared_context :rake do
+# rubocop:disable RSpec/ContextWording
+shared_context 'rake' do
   include ::Rake::DSL if defined?(::Rake::DSL)
   include ::FakeFS::SpecHelpers
 
-  let(:rake) { Rake::Application.new }
   subject { self.class.top_level_description.constantize }
+
+  let(:rake) { Rake::Application.new }
 
   before do
     Rake.application = rake
   end
 
-  before(:each) do
+  before do
     Rake::Task.clear
   end
 end
+# rubocop:enable RSpec/ContextWording

@@ -50,6 +50,14 @@ commands:
       - run: ./scripts/ci/common/configure-rubygems.sh
 
 jobs:
+  build:
+    <<: *defaults
+    steps:
+      - checkout
+      - configure_tools
+      - run: ./scripts/ci/steps/build.sh
+      - notify
+
   test:
     <<: *defaults
     steps:
@@ -86,9 +94,14 @@ workflows:
   version: 2
   pipeline:
     jobs:
+      - build:
+          <<: *only_main_and_dependabot
+          <<: *slack_context
       - test:
           <<: *only_main_and_dependabot
           <<: *slack_context
+          requires:
+            - build
       - merge_pull_request:
           <<: *only_dependabot
           <<: *slack_context

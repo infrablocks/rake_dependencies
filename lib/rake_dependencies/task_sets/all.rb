@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'rake_factory'
 
 require_relative '../tasks/clean'
@@ -5,7 +7,6 @@ require_relative '../tasks/download'
 require_relative '../tasks/ensure'
 require_relative '../tasks/extract'
 require_relative '../tasks/fetch'
-
 
 module RakeDependencies
   module TaskSets
@@ -42,30 +43,42 @@ module RakeDependencies
       parameter :fetch_task_name, default: :fetch
       parameter :ensure_task_name, default: :ensure
 
-      task Tasks::Clean, name: RakeFactory::DynamicValue.new { |ts|
-        ts.clean_task_name
-      }
-      task Tasks::Download, name: RakeFactory::DynamicValue.new { |ts|
-        ts.download_task_name
-      }
-      task Tasks::Extract, name: RakeFactory::DynamicValue.new { |ts|
-        ts.extract_task_name
-      }
-      task Tasks::Install, {
-          name: RakeFactory::DynamicValue.new { |ts|
-            ts.install_task_name
-          },
+      task(
+        Tasks::Clean, {
+          name: (RakeFactory::DynamicValue.new { |ts| ts.clean_task_name })
+        }
+      )
+      task(
+        Tasks::Download, {
+          name: (RakeFactory::DynamicValue.new { |ts| ts.download_task_name })
+        }
+      )
+      task(
+        Tasks::Extract, {
+          name: (RakeFactory::DynamicValue.new { |ts| ts.extract_task_name })
+        }
+      )
+      task(
+        Tasks::Fetch, {
+          name: (RakeFactory::DynamicValue.new { |ts| ts.fetch_task_name })
+        }
+      )
+      task(
+        Tasks::Ensure, {
+          name: (RakeFactory::DynamicValue.new { |ts| ts.ensure_task_name })
+        }
+      )
+      task(
+        Tasks::Install, {
+          name:
+            (RakeFactory::DynamicValue.new { |ts| ts.install_task_name }),
+          binary_name_template:
+            (RakeFactory::DynamicValue.new do |ts|
+              ts.target_binary_name_template || ts.dependency
+            end),
           define_if: ->(ts) { ts.installation_directory }
-      } do |ts, t|
-        t.binary_name_template =
-            ts.target_binary_name_template || ts.dependency
-      end
-      task Tasks::Fetch, name: RakeFactory::DynamicValue.new { |ts|
-        ts.fetch_task_name
-      }
-      task Tasks::Ensure, name: RakeFactory::DynamicValue.new { |ts|
-        ts.ensure_task_name
-      }
+        }
+      )
     end
   end
 end

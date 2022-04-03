@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'rake_factory'
 require 'rubygems'
 
@@ -7,9 +9,9 @@ module RakeDependencies
   module Tasks
     class Install < RakeFactory::Task
       default_name :install
-      default_description RakeFactory::DynamicValue.new { |t|
+      default_description(RakeFactory::DynamicValue.new do |t|
         "Install #{t.dependency}"
-      }
+      end)
 
       parameter :platform_cpu_names, default: PlatformNames::CPU
       parameter :platform_os_names, default: PlatformNames::OS
@@ -26,19 +28,20 @@ module RakeDependencies
 
       action do
         parameters = {
-            version: version,
-            platform: platform,
-            platform_cpu_name: platform_cpu_name,
-            platform_os_name: platform_os_name,
-            ext: ext
+          version: version,
+          platform: platform,
+          platform_cpu_name: platform_cpu_name,
+          platform_os_name: platform_os_name,
+          ext: ext
         }
 
         binary_file_name = Template.new(binary_name_template)
-            .with_parameters(parameters)
-            .render
+                                   .with_parameters(parameters)
+                                   .render
         binary_file_directory = File.join(path, binary_directory)
         binary_file_path = File.join(
-            binary_file_directory, binary_file_name)
+          binary_file_directory, binary_file_name
+        )
 
         mkdir_p installation_directory
         cp binary_file_path, installation_directory
@@ -64,14 +67,10 @@ module RakeDependencies
 
       def ext
         case resolved_type
-        when :tar_gz then
-          '.tar.gz'
-        when :tgz then
-          '.tgz'
-        when :zip then
-          '.zip'
-        when :uncompressed then
-          ''
+        when :tar_gz then '.tar.gz'
+        when :tgz then '.tgz'
+        when :zip then '.zip'
+        when :uncompressed then ''
         else
           raise "Unknown type: #{type}"
         end

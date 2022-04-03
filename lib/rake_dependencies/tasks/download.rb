@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
+require 'down'
 require 'rake_factory'
-require 'open-uri'
 require 'rubygems'
 
 require_relative '../template'
@@ -9,9 +11,9 @@ module RakeDependencies
   module Tasks
     class Download < RakeFactory::Task
       default_name :download
-      default_description RakeFactory::DynamicValue.new { |t|
+      default_description(RakeFactory::DynamicValue.new do |t|
         "Download #{t.dependency} distribution"
-      }
+      end)
 
       parameter :type, default: :zip
 
@@ -42,9 +44,10 @@ module RakeDependencies
                                      .with_parameters(parameters)
                                      .render
         download_file_directory = File.join(path, distribution_directory)
-        download_file_path = File.join(download_file_directory, download_file_name)
+        download_file_path = File.join(download_file_directory,
+                                       download_file_name)
 
-        temporary_file = URI.open(uri)
+        temporary_file = Down.download(uri)
 
         mkdir_p download_file_directory
         cp temporary_file.path, download_file_path
@@ -70,14 +73,10 @@ module RakeDependencies
 
       def ext
         case resolved_type
-        when :tar_gz then
-          '.tar.gz'
-        when :tgz then
-          '.tgz'
-        when :zip then
-          '.zip'
-        when :uncompressed then
-          ''
+        when :tar_gz then '.tar.gz'
+        when :tgz then '.tgz'
+        when :zip then '.zip'
+        when :uncompressed then ''
         else
           raise "Unknown type: #{type}"
         end

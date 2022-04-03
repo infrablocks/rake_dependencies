@@ -1,12 +1,14 @@
+# frozen_string_literal: true
+
 require 'rake_factory'
 
 module RakeDependencies
   module Tasks
     class Ensure < RakeFactory::Task
       default_name :ensure
-      default_description RakeFactory::DynamicValue.new { |t|
+      default_description(RakeFactory::DynamicValue.new do |t|
         "Ensure #{t.dependency} present"
-      }
+      end)
 
       parameter :dependency, required: true
       parameter :version
@@ -28,8 +30,8 @@ module RakeDependencies
 
         install_name = t.scope.path_with_task_name(t.install_task_name)
         install = if Rake::Task.task_defined?(install_name)
-          Rake::Task[install_name]
-        end
+                    Rake::Task[install_name]
+                  end
 
         if needs_fetch.call(t)
           [clean, download, extract, install].compact.map(&:invoke)
