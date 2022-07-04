@@ -117,7 +117,7 @@ describe RakeDependencies::Tasks::Fetch do
     # rubocop:enable RSpec/MultipleExpectations
 
     # rubocop:disable RSpec/MultipleExpectations
-    it 'uses the correct namespace for prerequisites when multiple fetch '\
+    it 'uses the correct namespace for prerequisites when multiple fetch ' \
        'tasks are declared' do
       define_task(namespace: :dependency1)
       define_task(namespace: :dependency2)

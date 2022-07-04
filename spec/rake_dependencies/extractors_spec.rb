@@ -52,7 +52,7 @@ describe RakeDependencies::Extractors do
     end
 
     # rubocop:disable RSpec/MultipleExpectations
-    it 'recursively makes directories for the zip file entries under the '\
+    it 'recursively makes directories for the zip file entries under the ' \
        'extract path' do
       zip_file_path = 'some/path/to/the-file.zip'
       extract_path = 'some/path/for/extraction'
@@ -109,7 +109,7 @@ describe RakeDependencies::Extractors do
     end
     # rubocop:enable RSpec/MultipleExpectations
 
-    it 'does not extract the entry into the extract path if a file already '\
+    it 'does not extract the entry into the extract path if a file already ' \
        'exists at that location' do
       zip_file_path = 'some/path/to/the-file.zip'
       extract_path = 'some/path/for/extraction'
@@ -136,7 +136,7 @@ describe RakeDependencies::Extractors do
     end
 
     # rubocop:disable RSpec/MultipleExpectations
-    it 'recursively makes directories for the stripped zip file entries '\
+    it 'recursively makes directories for the stripped zip file entries ' \
        'when a strip path option is supplied' do
       zip_file_path = 'some/path/to/the-file.zip'
       extract_path = 'some/path/for/extraction'
@@ -169,7 +169,7 @@ describe RakeDependencies::Extractors do
     # rubocop:enable RSpec/MultipleExpectations
 
     # rubocop:disable RSpec/MultipleExpectations
-    it 'extracts the entry into the stripped extract path when a strip path '\
+    it 'extracts the entry into the stripped extract path when a strip path ' \
        'option is supplied' do
       zip_file_path = 'some/path/to/the-file.zip'
       extract_path = 'some/path/for/extraction'
@@ -324,7 +324,7 @@ describe RakeDependencies::Extractors do
     end
 
     # rubocop:disable RSpec/MultipleExpectations
-    it 'recursively makes directories for the tgz file entries under the '\
+    it 'recursively makes directories for the tgz file entries under the ' \
        'extract path' do
       tgz_file_path = 'some/path/to/the-file.tar.gz'
       extract_path = 'some/path/for/extraction'
@@ -397,7 +397,7 @@ describe RakeDependencies::Extractors do
     end
     # rubocop:enable RSpec/MultipleExpectations
 
-    it 'does not extract the entry if a file already exists at the '\
+    it 'does not extract the entry if a file already exists at the ' \
        'extract path' do
       tgz_file_path = 'some/path/to/the-file.tar.gz'
       extract_path = 'some/path/for/extraction'
@@ -421,7 +421,7 @@ describe RakeDependencies::Extractors do
     end
 
     # rubocop:disable RSpec/MultipleExpectations
-    it 'recursively makes directories for the stripped tgz file entries '\
+    it 'recursively makes directories for the stripped tgz file entries ' \
        'when a strip path option is supplied' do
       tgz_file_path = 'some/path/to/the-file.tar.gz'
       extract_path = 'some/path/for/extraction'
@@ -458,7 +458,7 @@ describe RakeDependencies::Extractors do
     # rubocop:enable RSpec/MultipleExpectations
 
     # rubocop:disable RSpec/MultipleExpectations
-    it 'extracts the entry into the stripped extract path when a strip '\
+    it 'extracts the entry into the stripped extract path when a strip ' \
        'path option is supplied' do
       tgz_file_path = 'some/path/to/the-file.tar.gz'
       extract_path = 'some/path/for/extraction'
@@ -644,7 +644,7 @@ describe RakeDependencies::Extractors do
                     'some/path/for/extraction/the-file'))
     end
 
-    it 'renames the binary when the rename_from and rename_to options '\
+    it 'renames the binary when the rename_from and rename_to options ' \
        'are provided' do
       uncompressed_file_path = 'some/path/to/the-file'
       extract_path = 'some/path/for/extraction'

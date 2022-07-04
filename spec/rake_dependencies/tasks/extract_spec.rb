@@ -13,7 +13,7 @@ describe RakeDependencies::Tasks::Extract do
         t.path = 'vendor/dependency'
         t.version = '1.2.3'
         t.file_name_template =
-          'some-dep-<%= @platform_os_name %>-<%= @platform_cpu_name %>'\
+          'some-dep-<%= @platform_os_name %>-<%= @platform_cpu_name %>' \
           '<%= @ext %>'
         block&.call(t)
       end
@@ -596,7 +596,7 @@ describe RakeDependencies::Tasks::Extract do
               .with('vendor/dependency/dist/file.tar.gz', any_args))
     end
 
-    it 'uses the provided platform specific extension when a map is passed '\
+    it 'uses the provided platform specific extension when a map is passed ' \
        'as the type' do
       define_task do |t|
         t.type = { darwin: :zip, linux: :tar_gz }
@@ -800,7 +800,7 @@ describe RakeDependencies::Tasks::Extract do
 
   describe 'uncompressed distributions' do
     # rubocop:disable RSpec/MultipleExpectations
-    it 'copies the uncompressed distribution to the binary directory with '\
+    it 'copies the uncompressed distribution to the binary directory with ' \
        'the supplied name' do
       define_task do |t|
         t.type = :uncompressed
