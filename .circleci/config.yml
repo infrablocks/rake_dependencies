@@ -37,7 +37,7 @@ commands:
           condition:
             matches:
               pattern: "^dependabot.*"
-              value: << pipeline.git.branch >> }
+              value: << pipeline.git.branch >>
           steps:
             - slack/notify:
                 event: fail
@@ -51,7 +51,7 @@ commands:
           condition:
             matches:
               pattern: "^(?!dependabot).*"
-              value: << pipeline.git.branch >> }
+              value: << pipeline.git.branch >>
           steps:
             - slack/notify:
                 event: fail
