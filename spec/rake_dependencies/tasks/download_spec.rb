@@ -15,7 +15,7 @@ describe RakeDependencies::Tasks::Download do
         t.version = '1.2.3'
         t.type = :tar_gz
         t.uri_template =
-          'https://example.com/<%= @version %>/super-cool-tool-'\
+          'https://example.com/<%= @version %>/super-cool-tool-' \
           '<%= @platform_os_name %>-<%= @platform_cpu_name %><%= @ext %>'
         t.file_name_template =
           'super-cool-tool-<%= @platform_os_name %><%= @ext %>'
@@ -55,7 +55,7 @@ describe RakeDependencies::Tasks::Download do
         t.version = '1.2.3'
         t.type = :tar_gz
         t.uri_template =
-          'https://example.com/<%= @version %>/super-cool-tool-'\
+          'https://example.com/<%= @version %>/super-cool-tool-' \
           '<%= @platform_os_name %>-<%= @platform_cpu_name %><%= @ext %>'
         t.file_name_template =
           'super-cool-tool-<%= @platform_os_name %><%= @ext %>'
@@ -68,7 +68,7 @@ describe RakeDependencies::Tasks::Download do
         t.version = '1.2.3'
         t.type = :tar_gz
         t.uri_template =
-          'https://example.com/<%= @version %>/super-cool-tool-'\
+          'https://example.com/<%= @version %>/super-cool-tool-' \
           '<%= @platform_os_name %>-<%= @platform_cpu_name %><%= @ext %>'
         t.file_name_template =
           'super-cool-tool-<%= @platform_os_name %><%= @ext %>'
@@ -97,7 +97,7 @@ describe RakeDependencies::Tasks::Download do
             .with('vendor/dependency/dist'))
   end
 
-  it 'constructs a URI from the provided template, version, and type and '\
+  it 'constructs a URI from the provided template, version, and type and ' \
      'downloads that URI' do
     define_task
     use_platform('arm64-darwin-21')
@@ -110,12 +110,12 @@ describe RakeDependencies::Tasks::Download do
 
     expect(Down)
       .to(have_received(:download)
-            .with('https://example.com/1.2.3/super-cool-tool-darwin-arm64'\
+            .with('https://example.com/1.2.3/super-cool-tool-darwin-arm64' \
                   '.tar.gz'))
   end
 
-  it 'copies the downloaded file to the download path using the download file'\
-     ' name template' do
+  it 'copies the downloaded file to the download path using the download ' \
+     'file name template' do
     define_task
     use_platform('arm64-darwin-21')
 
@@ -526,7 +526,7 @@ describe RakeDependencies::Tasks::Download do
             .with(''))
   end
 
-  it 'uses the provided platform specific extension when a map is passed as '\
+  it 'uses the provided platform specific extension when a map is passed as ' \
      'the type' do
     define_task do |t|
       t.type = { darwin: :zip, linux: :tar_gz }
