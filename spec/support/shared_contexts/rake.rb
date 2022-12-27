@@ -1,15 +1,14 @@
 # frozen_string_literal: true
 
 require 'rake'
-require 'pp'
 require 'fakefs/spec_helpers'
 require 'active_support'
 require 'active_support/core_ext/string/inflections'
 
 # rubocop:disable RSpec/ContextWording
 shared_context 'rake' do
-  include ::Rake::DSL if defined?(::Rake::DSL)
-  include ::FakeFS::SpecHelpers
+  include Rake::DSL if defined?(Rake::DSL)
+  include FakeFS::SpecHelpers
 
   subject { self.class.top_level_description.constantize }
 

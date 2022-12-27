@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'pp'
-
 RSpec::Matchers.define :have_task_defined do |expected|
   match do |actual|
     !actual.lookup(expected).nil?

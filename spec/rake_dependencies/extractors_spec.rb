@@ -12,7 +12,7 @@ TarGzExtractor = RakeDependencies::Extractors::TarGzExtractor
 UncompressedExtractor = RakeDependencies::Extractors::UncompressedExtractor
 
 describe RakeDependencies::Extractors do
-  include ::FakeFS::SpecHelpers
+  include FakeFS::SpecHelpers
 
   context ZipExtractor do
     it 'recursively makes the extract path' do
