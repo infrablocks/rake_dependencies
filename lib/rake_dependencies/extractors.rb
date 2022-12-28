@@ -31,7 +31,9 @@ module RakeDependencies
       private
 
       def extract_files
-        Zip::File.open(file_path) do |zip_file_entries|
+        Zip::File.open(
+          file_path, false, restore_permissions: true
+        ) do |zip_file_entries|
           zip_file_entries.each do |entry|
             process_zip_file_entry(zip_file_entries, entry)
           end

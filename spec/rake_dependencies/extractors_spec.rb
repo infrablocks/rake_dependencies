@@ -48,7 +48,45 @@ describe RakeDependencies::Extractors do
 
       expect(Zip::File)
         .to(have_received(:open)
-              .with(zip_file_path))
+              .with(zip_file_path, anything, anything))
+    end
+
+    it 'does not create the zip file if missing on open' do
+      zip_file_path = 'some/path/to/the-file.zip'
+      extract_path = 'some/path/for/extraction'
+
+      stub_zip_file_open
+      stub_make_directory
+
+      extractor = ZipExtractor.new(zip_file_path, extract_path)
+
+      allow(Zip::File).to(receive(:open))
+
+      extractor.extract
+
+      expect(Zip::File)
+        .to(have_received(:open)
+              .with(anything, false, anything))
+    end
+
+    it 'configures restoring permissions when extracting on open' do
+      zip_file_path = 'some/path/to/the-file.zip'
+      extract_path = 'some/path/for/extraction'
+
+      stub_zip_file_open
+      stub_make_directory
+
+      extractor = ZipExtractor.new(zip_file_path, extract_path)
+
+      allow(Zip::File).to(receive(:open))
+
+      extractor.extract
+
+      expect(Zip::File)
+        .to(have_received(:open)
+              .with(anything,
+                    anything,
+                    hash_including(restore_permissions: true)))
     end
 
     # rubocop:disable RSpec/MultipleExpectations
