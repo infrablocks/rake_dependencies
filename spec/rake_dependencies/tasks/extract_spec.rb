@@ -173,14 +173,12 @@ describe RakeDependencies::Tasks::Extract do
     end
 
     it 'passes the provided platform CPU name for x86_64 when present' do
-      # rubocop:disable Naming/VariableNumber
       define_task do |t|
         t.path = 'some/path'
         t.distribution_directory = 'dist'
         t.platform_cpu_names = { x86_64: 'x86_64' }
         t.file_name_template = '<%= @platform_cpu_name %>'
       end
-      # rubocop:enable Naming/VariableNumber
       use_platform('x86_64-darwin')
 
       extractor = instance_double(

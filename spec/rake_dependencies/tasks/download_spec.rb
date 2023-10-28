@@ -213,12 +213,10 @@ describe RakeDependencies::Tasks::Download do
   end
 
   it 'passes the provided platform CPU name for x86_64 when present' do
-    # rubocop:disable Naming/VariableNumber
     define_task do |t|
       t.platform_cpu_names = { x86_64: 'x86_64' }
       t.uri_template = '<%= @platform_cpu_name %>'
     end
-    # rubocop:enable Naming/VariableNumber
     use_platform('x86_64-darwin')
 
     task = Rake::Task['dependency:download']

@@ -182,15 +182,12 @@ describe RakeDependencies::Tasks::Install do
 
     # rubocop:disable RSpec/MultipleExpectations
     it 'passes the provided platform CPU name for x86_64 when present' do
-      # rubocop:disable Naming/VariableNumber
       define_task do |t|
         t.path = 'some/path'
         t.platform_cpu_names = { x86_64: 'x86_64' }
         t.binary_name_template = '<%= @platform_cpu_name %>'
         t.installation_directory = 'somewhere/important'
       end
-      # rubocop:enable Naming/VariableNumber
-
       use_platform('x86_64-darwin')
 
       task = Rake::Task['dependency:install']

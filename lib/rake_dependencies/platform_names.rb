@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 module RakeDependencies
-  # rubocop:disable Naming/VariableNumber
   module PlatformNames
     CPU = {
       x86_64: 'amd64',
@@ -17,5 +16,4 @@ module RakeDependencies
       mswin64: 'windows'
     }.freeze
   end
-  # rubocop:enable Naming/VariableNumber
 end
