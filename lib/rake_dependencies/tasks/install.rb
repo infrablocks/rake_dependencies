@@ -4,6 +4,7 @@ require 'rake_factory'
 require 'rubygems'
 
 require_relative '../template'
+require_relative '../null_logger'
 
 module RakeDependencies
   module Tasks
@@ -26,7 +27,11 @@ module RakeDependencies
 
       parameter :installation_directory, required: true
 
+      parameter :logger, default: NullLogger.new
+
       action do
+        logger.info("Installing '#{dependency}'...")
+
         parameters = {
           version: version,
           platform: platform,
@@ -34,6 +39,10 @@ module RakeDependencies
           platform_os_name: platform_os_name,
           ext: ext
         }
+
+        logger.debug(
+          "Using parameters: #{parameters.merge(platform: platform.to_s)}."
+        )
 
         binary_file_name = Template.new(binary_name_template)
                                    .with_parameters(parameters)
@@ -43,8 +52,13 @@ module RakeDependencies
           binary_file_directory, binary_file_name
         )
 
+        logger.debug("Using binary file path: #{binary_file_path}.")
+        logger.debug("Using installation directory: #{installation_directory}.")
+
         mkdir_p installation_directory
         cp binary_file_path, installation_directory
+
+        logger.info('Installed.')
       end
 
       private

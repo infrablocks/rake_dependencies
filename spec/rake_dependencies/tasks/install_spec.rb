@@ -5,16 +5,21 @@ require 'spec_helper'
 describe RakeDependencies::Tasks::Install do
   include_context 'rake'
 
+  # rubocop:disable Metrics/MethodLength
   def define_task(opts = {}, &block)
     namespace :dependency do
-      subject.define({ dependency: 'some-dep' }.merge(opts)) do |t|
-        t.path = 'vendor/dependency'
-        t.binary_name_template = 'some-dep-<%= @version %>'
-        t.installation_directory = 'some/important/directory'
+      opts = {
+        dependency: 'some-dep',
+        path: 'vendor/dependency',
+        binary_name_template: 'some-dep-<%= @version %>',
+        installation_directory: 'some/important/directory'
+      }.merge(opts)
+      subject.define(opts) do |t|
         block&.call(t)
       end
     end
   end
+  # rubocop:enable Metrics/MethodLength
 
   describe 'task definition' do
     it 'adds an install task in the namespace in which it is created' do
@@ -717,6 +722,146 @@ describe RakeDependencies::Tasks::Install do
               .with('some/path/bin/1.2.3', 'somewhere/important'))
     end
     # rubocop:enable RSpec/MultipleExpectations
+  end
+
+  describe 'logging' do
+    it 'logs on starting install task' do
+      dependency = 'dependency'
+      logger = instance_double(Logger)
+
+      define_task(logger: logger, dependency: dependency)
+      use_platform('x86_64-darwin')
+
+      task = Rake::Task['dependency:install']
+
+      allow(task.creator).to(receive(:mkdir_p))
+      allow(task.creator).to(receive(:cp))
+
+      stub_logger(logger)
+
+      task.invoke
+
+      expect(logger)
+        .to(have_received(:info)
+              .with("Installing 'dependency'..."))
+    end
+
+    it 'logs resolved parameters' do
+      version = '1.2.3'
+      platform = 'arm64-darwin-21'
+      logger = instance_double(Logger)
+
+      define_task(
+        logger: logger,
+        version: version,
+        type: :zip
+      )
+      use_platform(platform)
+
+      task = Rake::Task['dependency:install']
+
+      allow(task.creator).to(receive(:mkdir_p))
+      allow(task.creator).to(receive(:cp))
+
+      stub_logger(logger)
+
+      task.invoke
+
+      expected_parameters = {
+        version: version,
+        platform: platform,
+        platform_cpu_name: 'arm64',
+        platform_os_name: 'darwin',
+        ext: '.zip'
+      }
+
+      expect(logger)
+        .to(have_received(:debug)
+              .with("Using parameters: #{expected_parameters}."))
+    end
+
+    it 'logs resolved binary file path' do
+      version = '1.2.3'
+      platform = 'arm64-darwin-21'
+      path = 'vendor/some-dep'
+      binary_name_template = 'some-dep-<%= @version %>'
+      logger = instance_double(Logger)
+
+      define_task(
+        version: version,
+        path: path,
+        binary_name_template: binary_name_template,
+        logger: logger
+      )
+      use_platform(platform)
+
+      task = Rake::Task['dependency:install']
+
+      allow(task.creator).to(receive(:mkdir_p))
+      allow(task.creator).to(receive(:cp))
+
+      stub_logger(logger)
+
+      task.invoke
+
+      expected_binary_file_path = 'vendor/some-dep/bin/some-dep-1.2.3'
+
+      expect(logger)
+        .to(have_received(:debug)
+              .with('Using binary file path: ' \
+                    "#{expected_binary_file_path}."))
+    end
+
+    it 'logs installation directory' do
+      installation_directory = 'some/important/directory'
+      logger = instance_double(Logger)
+
+      define_task(
+        installation_directory: installation_directory,
+        logger: logger
+      )
+      use_default_platform
+
+      task = Rake::Task['dependency:install']
+
+      allow(task.creator).to(receive(:mkdir_p))
+      allow(task.creator).to(receive(:cp))
+
+      stub_logger(logger)
+
+      task.invoke
+
+      expect(logger)
+        .to(have_received(:debug)
+              .with('Using installation directory: ' \
+                    "#{installation_directory}."))
+    end
+
+    it 'logs on completing install task' do
+      dependency = 'dependency'
+      logger = instance_double(Logger)
+
+      define_task(logger: logger, dependency: dependency)
+      use_platform('x86_64-darwin')
+
+      task = Rake::Task['dependency:install']
+
+      allow(task.creator).to(receive(:mkdir_p))
+      allow(task.creator).to(receive(:cp))
+
+      stub_logger(logger)
+
+      task.invoke
+
+      expect(logger)
+        .to(have_received(:info)
+              .with('Installed.'))
+    end
+  end
+
+  def stub_logger(logger)
+    allow(logger).to(receive(:info))
+    allow(logger).to(receive(:debug))
   end
 
   def use_platform(string)

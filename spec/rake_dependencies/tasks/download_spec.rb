@@ -9,569 +9,711 @@ describe RakeDependencies::Tasks::Download do
   # rubocop:disable Metrics/MethodLength
   def define_task(opts = {}, &block)
     namespace :dependency do
-      opts = { dependency: 'super-cool-tool' }.merge(opts)
-      described_class.define(opts) do |t|
-        t.path = 'vendor/dependency'
-        t.version = '1.2.3'
-        t.type = :tar_gz
-        t.uri_template =
+      opts = {
+        path: 'vendor/dependency',
+        dependency: 'super-cool-tool',
+        version: '1.2.3',
+        type: :tar_gz,
+        uri_template:
           'https://example.com/<%= @version %>/super-cool-tool-' \
-          '<%= @platform_os_name %>-<%= @platform_cpu_name %><%= @ext %>'
-        t.file_name_template =
+          '<%= @platform_os_name %>-<%= @platform_cpu_name %><%= @ext %>',
+        file_name_template:
           'super-cool-tool-<%= @platform_os_name %><%= @ext %>'
+      }.merge(opts)
+      described_class.define(opts) do |t|
         block&.call(t)
       end
     end
   end
   # rubocop:enable Metrics/MethodLength
 
-  # TODO: Check that it throws if required parameters are not supplied
+  describe 'task definition' do
+    # TODO: Check that it throws if required parameters are not supplied
 
-  it 'adds a download task in the namespace in which it is created' do
-    define_task
+    it 'adds a download task in the namespace in which it is created' do
+      define_task
 
-    expect(Rake.application)
-      .to(have_task_defined('dependency:download'))
-  end
+      expect(Rake.application)
+        .to(have_task_defined('dependency:download'))
+    end
 
-  it 'gives the download task a description' do
-    define_task(dependency: 'the-thing')
+    it 'gives the download task a description' do
+      define_task(dependency: 'the-thing')
 
-    expect(Rake::Task['dependency:download'].full_comment)
-      .to(eq('Download the-thing distribution'))
-  end
+      expect(Rake::Task['dependency:download'].full_comment)
+        .to(eq('Download the-thing distribution'))
+    end
 
-  it 'allows the task name to be overridden' do
-    define_task(name: :fetch)
+    it 'allows the task name to be overridden' do
+      define_task(name: :fetch)
 
-    expect(Rake.application)
-      .to(have_task_defined('dependency:fetch'))
-  end
+      expect(Rake.application)
+        .to(have_task_defined('dependency:fetch'))
+    end
 
-  it 'allows multiple download tasks to be declared' do
-    namespace :dependency1 do
-      described_class.define(dependency: 'super-cool-tool1') do |t|
-        t.path = 'vendor/dependency1'
-        t.version = '1.2.3'
-        t.type = :tar_gz
-        t.uri_template =
-          'https://example.com/<%= @version %>/super-cool-tool-' \
-          '<%= @platform_os_name %>-<%= @platform_cpu_name %><%= @ext %>'
-        t.file_name_template =
-          'super-cool-tool-<%= @platform_os_name %><%= @ext %>'
+    it 'allows multiple download tasks to be declared' do
+      namespace :dependency1 do
+        described_class.define(dependency: 'super-cool-tool1') do |t|
+          t.path = 'vendor/dependency1'
+          t.version = '1.2.3'
+          t.type = :tar_gz
+          t.uri_template =
+            'https://example.com/<%= @version %>/super-cool-tool-' \
+            '<%= @platform_os_name %>-<%= @platform_cpu_name %><%= @ext %>'
+          t.file_name_template =
+            'super-cool-tool-<%= @platform_os_name %><%= @ext %>'
+        end
       end
-    end
 
-    namespace :dependency2 do
-      described_class.define(dependency: 'super-cool-tool2') do |t|
-        t.path = 'vendor/dependency2'
-        t.version = '1.2.3'
-        t.type = :tar_gz
-        t.uri_template =
-          'https://example.com/<%= @version %>/super-cool-tool-' \
-          '<%= @platform_os_name %>-<%= @platform_cpu_name %><%= @ext %>'
-        t.file_name_template =
-          'super-cool-tool-<%= @platform_os_name %><%= @ext %>'
+      namespace :dependency2 do
+        described_class.define(dependency: 'super-cool-tool2') do |t|
+          t.path = 'vendor/dependency2'
+          t.version = '1.2.3'
+          t.type = :tar_gz
+          t.uri_template =
+            'https://example.com/<%= @version %>/super-cool-tool-' \
+            '<%= @platform_os_name %>-<%= @platform_cpu_name %><%= @ext %>'
+          t.file_name_template =
+            'super-cool-tool-<%= @platform_os_name %><%= @ext %>'
+        end
       end
+
+      expect(Rake.application)
+        .to(have_tasks_defined(
+              %w[dependency1:download
+                 dependency2:download]
+            ))
     end
-
-    expect(Rake.application)
-      .to(have_tasks_defined(
-            %w[dependency1:download
-               dependency2:download]
-          ))
   end
 
-  it 'recursively makes the download path' do
-    define_task
-    use_default_platform
+  describe 'task invocation' do
+    it 'recursively makes the download path' do
+      define_task
+      use_default_platform
 
-    task = Rake::Task['dependency:download']
+      task = Rake::Task['dependency:download']
 
-    stub_external_calls(task)
+      stub_external_calls(task)
 
-    task.invoke
-
-    expect(task.creator)
-      .to(have_received(:mkdir_p)
-            .with('vendor/dependency/dist'))
-  end
-
-  it 'constructs a URI from the provided template, version, and type and ' \
-     'downloads that URI' do
-    define_task
-    use_platform('arm64-darwin-21')
-
-    task = Rake::Task['dependency:download']
-
-    stub_external_calls(task)
-
-    task.invoke
-
-    expect(Down)
-      .to(have_received(:download)
-            .with('https://example.com/1.2.3/super-cool-tool-darwin-arm64' \
-                  '.tar.gz'))
-  end
-
-  it 'copies the downloaded file to the download path using the download ' \
-     'file name template' do
-    define_task
-    use_platform('arm64-darwin-21')
-
-    task = Rake::Task['dependency:download']
-
-    stub_external_calls(task)
-
-    File.write('/download_file', 'download_content')
-    allow(Down)
-      .to(receive(:download)
-            .and_return(File.new('/download_file')))
-    allow(task.creator).to(receive(:cp))
-
-    task.invoke
-
-    expect(task.creator)
-      .to(have_received(:cp)
-            .with('/download_file',
-                  'vendor/dependency/dist/super-cool-tool-darwin.tar.gz'))
-  end
-
-  it 'passes a platform CPU name of "amd64" for x86_64 by default' do
-    define_task { |t| t.uri_template = '<%= @platform_cpu_name %>' }
-    use_platform('x86_64-darwin')
-
-    task = Rake::Task['dependency:download']
-
-    stub_external_calls(task)
-
-    task.invoke
-
-    expect(Down)
-      .to(have_received(:download)
-            .with('amd64'))
-  end
-
-  it 'passes a platform CPU name of "amd64" for x64 by default' do
-    define_task { |t| t.uri_template = '<%= @platform_cpu_name %>' }
-    use_platform('x64-linux')
-
-    task = Rake::Task['dependency:download']
-
-    stub_external_calls(task)
-
-    task.invoke
-
-    expect(Down)
-      .to(have_received(:download)
-            .with('amd64'))
-  end
-
-  it 'passes a platform CPU name of "386" for x86 by default' do
-    define_task { |t| t.uri_template = '<%= @platform_cpu_name %>' }
-    use_platform('x86-linux')
-
-    task = Rake::Task['dependency:download']
-
-    stub_external_calls(task)
-
-    task.invoke
-
-    expect(Down)
-      .to(have_received(:download)
-            .with('386'))
-  end
-
-  it 'passes a platform CPU name of "arm" for arm by default' do
-    define_task { |t| t.uri_template = '<%= @platform_cpu_name %>' }
-    use_platform('arm-linux')
-
-    task = Rake::Task['dependency:download']
-
-    stub_external_calls(task)
-
-    task.invoke
-
-    expect(Down)
-      .to(have_received(:download)
-            .with('arm'))
-  end
-
-  it 'passes a platform CPU name of "arm64" for arm64 by default' do
-    define_task { |t| t.uri_template = '<%= @platform_cpu_name %>' }
-    use_platform('arm64-darwin-21')
-
-    task = Rake::Task['dependency:download']
-
-    stub_external_calls(task)
-
-    task.invoke
-
-    expect(Down)
-      .to(have_received(:download)
-            .with('arm64'))
-  end
-
-  it 'passes the provided platform CPU name for x86_64 when present' do
-    define_task do |t|
-      t.platform_cpu_names = { x86_64: 'x86_64' }
-      t.uri_template = '<%= @platform_cpu_name %>'
-    end
-    use_platform('x86_64-darwin')
-
-    task = Rake::Task['dependency:download']
-
-    stub_external_calls(task)
-
-    task.invoke
-
-    expect(Down)
-      .to(have_received(:download)
-            .with('x86_64'))
-  end
-
-  it 'passes the provided platform CPU name for x64 when present' do
-    define_task do |t|
-      t.platform_cpu_names = { x64: 'x86_64' }
-      t.uri_template = '<%= @platform_cpu_name %>'
-    end
-    use_platform('x64-linux')
-
-    task = Rake::Task['dependency:download']
-
-    stub_external_calls(task)
-
-    task.invoke
-
-    expect(Down)
-      .to(have_received(:download)
-            .with('x86_64'))
-  end
-
-  it 'passes the provided platform CPU name for x86 when present' do
-    define_task do |t|
-      t.platform_cpu_names = { x86: 'x86' }
-      t.uri_template = '<%= @platform_cpu_name %>'
-    end
-    use_platform('x86-linux')
-
-    task = Rake::Task['dependency:download']
-
-    stub_external_calls(task)
-
-    task.invoke
-
-    expect(Down)
-      .to(have_received(:download)
-            .with('x86'))
-  end
-
-  it 'passes the provided platform CPU name for arm when present' do
-    define_task do |t|
-      t.platform_cpu_names = { arm: 'armv4' }
-      t.uri_template = '<%= @platform_cpu_name %>'
-    end
-    use_platform('arm-linux')
-
-    task = Rake::Task['dependency:download']
-
-    stub_external_calls(task)
-
-    task.invoke
-
-    expect(Down)
-      .to(have_received(:download)
-            .with('armv4'))
-  end
-
-  it 'passes the provided platform CPU name for arm64 when present' do
-    define_task do |t|
-      t.platform_cpu_names = { arm64: 'armv9' }
-      t.uri_template = '<%= @platform_cpu_name %>'
-    end
-    use_platform('arm64-darwin-21')
-
-    task = Rake::Task['dependency:download']
-
-    stub_external_calls(task)
-
-    task.invoke
-
-    expect(Down)
-      .to(have_received(:download)
-            .with('armv9'))
-  end
-
-  it 'passes the provided platform CPU name for another arch when present' do
-    define_task do |t|
-      t.platform_cpu_names = { powerpc: 'powerpc' }
-      t.uri_template = '<%= @platform_cpu_name %>'
-    end
-    use_platform('powerpc-linux')
-
-    task = Rake::Task['dependency:download']
-
-    stub_external_calls(task)
-
-    task.invoke
-
-    expect(Down)
-      .to(have_received(:download)
-            .with('powerpc'))
-  end
-
-  it 'passes a platform OS name of "darwin" on darwin by default' do
-    define_task { |t| t.uri_template = '<%= @platform_os_name %>' }
-    use_platform('arm64-darwin-21')
-
-    task = Rake::Task['dependency:download']
-
-    stub_external_calls(task)
-
-    task.invoke
-
-    expect(Down)
-      .to(have_received(:download)
-            .with('darwin'))
-  end
-
-  it 'passes a platform OS name of "linux" on linux by default' do
-    define_task { |t| t.uri_template = '<%= @platform_os_name %>' }
-    use_platform('x86_64-linux')
-
-    task = Rake::Task['dependency:download']
-
-    stub_external_calls(task)
-
-    task.invoke
-
-    expect(Down)
-      .to(have_received(:download)
-            .with('linux'))
-  end
-
-  it 'passes a platform OS name of "windows" on mswin32 by default' do
-    define_task { |t| t.uri_template = '<%= @platform_os_name %>' }
-    use_platform('x86-mswin32')
-
-    task = Rake::Task['dependency:download']
-
-    stub_external_calls(task)
-
-    task.invoke
-
-    expect(Down)
-      .to(have_received(:download)
-            .with('windows'))
-  end
-
-  it 'passes a platform OS name of "windows" on mswin64 by default' do
-    define_task { |t| t.uri_template = '<%= @platform_os_name %>' }
-    use_platform('x86_64-mswin64')
-
-    task = Rake::Task['dependency:download']
-
-    stub_external_calls(task)
-
-    task.invoke
-
-    expect(Down)
-      .to(have_received(:download)
-            .with('windows'))
-  end
-
-  it 'passes the provided platform OS name for darwin when present' do
-    define_task do |t|
-      t.platform_os_names = { darwin: 'mac', linux: 'linux64' }
-      t.uri_template = '<%= @platform_os_name %>'
-    end
-    use_platform('x86_64-darwin')
-
-    task = Rake::Task['dependency:download']
-
-    stub_external_calls(task)
-
-    task.invoke
-
-    expect(Down)
-      .to(have_received(:download)
-            .with('mac'))
-  end
-
-  it 'passes the provided platform OS name for linux when present' do
-    define_task do |t|
-      t.platform_os_names = { darwin: 'mac', linux: 'linux64' }
-      t.uri_template = '<%= @platform_os_name %>'
-    end
-    use_platform('x86_64-linux')
-
-    task = Rake::Task['dependency:download']
-
-    stub_external_calls(task)
-
-    task.invoke
-
-    expect(Down)
-      .to(have_received(:download)
-            .with('linux64'))
-  end
-
-  it 'passes the provided platform OS name for mswin32 when present' do
-    define_task do |t|
-      t.platform_os_names = { mswin32: 'mswin32' }
-      t.uri_template = '<%= @platform_os_name %>'
-    end
-    use_platform('i686-mswin32')
-
-    task = Rake::Task['dependency:download']
-
-    stub_external_calls(task)
-
-    task.invoke
-
-    expect(Down)
-      .to(have_received(:download)
-            .with('mswin32'))
-  end
-
-  it 'passes the provided platform OS name for mswin64 when present' do
-    define_task do |t|
-      t.platform_os_names = { mswin64: 'mswin64' }
-      t.uri_template = '<%= @platform_os_name %>'
-    end
-    use_platform('x64-mswin64')
-
-    task = Rake::Task['dependency:download']
-
-    stub_external_calls(task)
-
-    task.invoke
-
-    expect(Down)
-      .to(have_received(:download)
-            .with('mswin64'))
-  end
-
-  it 'passes the provided platform OS name for another OS when present' do
-    define_task do |t|
-      t.platform_os_names = { aix: 'aix' }
-      t.uri_template = '<%= @platform_os_name %>'
-    end
-    use_platform('x86-aix')
-
-    task = Rake::Task['dependency:download']
-
-    stub_external_calls(task)
-
-    task.invoke
-
-    expect(Down)
-      .to(have_received(:download)
-            .with('aix'))
-  end
-
-  it 'uses an extension of .zip when type is zip' do
-    define_task do |t|
-      t.type = :zip
-      t.uri_template = '<%= @ext %>'
-    end
-    use_default_platform
-
-    task = Rake::Task['dependency:download']
-
-    stub_external_calls(task)
-
-    task.invoke
-
-    expect(Down)
-      .to(have_received(:download)
-            .with('.zip'))
-  end
-
-  it 'uses an extension of .tgz when type is tgz' do
-    define_task do |t|
-      t.type = :tgz
-      t.uri_template = '<%= @ext %>'
-    end
-    use_default_platform
-
-    task = Rake::Task['dependency:download']
-
-    stub_external_calls(task)
-
-    task.invoke
-
-    expect(Down)
-      .to(have_received(:download)
-            .with('.tgz'))
-  end
-
-  it 'uses no extension when type is uncompressed' do
-    define_task do |t|
-      t.type = :uncompressed
-      t.uri_template = '<%= @ext %>'
-    end
-    use_default_platform
-
-    task = Rake::Task['dependency:download']
-
-    stub_external_calls(task)
-
-    task.invoke
-
-    expect(Down)
-      .to(have_received(:download)
-            .with(''))
-  end
-
-  it 'uses the provided platform specific extension when a map is passed as ' \
-     'the type' do
-    define_task do |t|
-      t.type = { darwin: :zip, linux: :tar_gz }
-      t.uri_template = '<%= @ext %>'
-    end
-    use_platform('x86_64-linux')
-
-    task = Rake::Task['dependency:download']
-
-    stub_external_calls(task)
-
-    task.invoke
-
-    expect(Down)
-      .to(have_received(:download)
-            .with('.tar.gz'))
-  end
-
-  it 'raises an error when an unknown type is supplied' do
-    define_task do |t|
-      t.type = :wat
-      t.uri_template = '<%= @ext %>'
-    end
-    use_default_platform
-
-    task = Rake::Task['dependency:download']
-
-    stub_external_calls(task)
-
-    expect do
       task.invoke
-    end.to raise_error(RuntimeError, 'Unknown type: wat')
+
+      expect(task.creator)
+        .to(have_received(:mkdir_p)
+              .with('vendor/dependency/dist'))
+    end
+
+    it 'constructs a URI from the provided template, version, and type and ' \
+       'downloads that URI' do
+      define_task
+      use_platform('arm64-darwin-21')
+
+      task = Rake::Task['dependency:download']
+
+      stub_external_calls(task)
+
+      task.invoke
+
+      expect(Down)
+        .to(have_received(:download)
+              .with('https://example.com/1.2.3/super-cool-tool-darwin-arm64' \
+                    '.tar.gz'))
+    end
+
+    it 'copies the downloaded file to the download path using the download ' \
+       'file name template' do
+      define_task
+      use_platform('arm64-darwin-21')
+
+      task = Rake::Task['dependency:download']
+
+      stub_external_calls(task)
+
+      File.write('/download_file', 'download_content')
+      allow(Down)
+        .to(receive(:download)
+              .and_return(File.new('/download_file')))
+      allow(task.creator).to(receive(:cp))
+
+      task.invoke
+
+      expect(task.creator)
+        .to(have_received(:cp)
+              .with('/download_file',
+                    'vendor/dependency/dist/super-cool-tool-darwin.tar.gz'))
+    end
   end
 
-  it 'allows the distribution directory to be overridden' do
-    define_task { |t| t.distribution_directory = 'spinach' }
-    use_default_platform
+  describe 'URI construction' do
+    it 'passes a platform CPU name of "amd64" for x86_64 by default' do
+      define_task { |t| t.uri_template = '<%= @platform_cpu_name %>' }
+      use_platform('x86_64-darwin')
 
-    task = Rake::Task['dependency:download']
+      task = Rake::Task['dependency:download']
 
-    stub_external_calls(task)
+      stub_external_calls(task)
 
-    task.invoke
+      task.invoke
 
-    expect(task.creator)
-      .to(have_received(:mkdir_p)
-            .with('vendor/dependency/spinach'))
+      expect(Down)
+        .to(have_received(:download)
+              .with('amd64'))
+    end
+
+    it 'passes a platform CPU name of "amd64" for x64 by default' do
+      define_task { |t| t.uri_template = '<%= @platform_cpu_name %>' }
+      use_platform('x64-linux')
+
+      task = Rake::Task['dependency:download']
+
+      stub_external_calls(task)
+
+      task.invoke
+
+      expect(Down)
+        .to(have_received(:download)
+              .with('amd64'))
+    end
+
+    it 'passes a platform CPU name of "386" for x86 by default' do
+      define_task { |t| t.uri_template = '<%= @platform_cpu_name %>' }
+      use_platform('x86-linux')
+
+      task = Rake::Task['dependency:download']
+
+      stub_external_calls(task)
+
+      task.invoke
+
+      expect(Down)
+        .to(have_received(:download)
+              .with('386'))
+    end
+
+    it 'passes a platform CPU name of "arm" for arm by default' do
+      define_task { |t| t.uri_template = '<%= @platform_cpu_name %>' }
+      use_platform('arm-linux')
+
+      task = Rake::Task['dependency:download']
+
+      stub_external_calls(task)
+
+      task.invoke
+
+      expect(Down)
+        .to(have_received(:download)
+              .with('arm'))
+    end
+
+    it 'passes a platform CPU name of "arm64" for arm64 by default' do
+      define_task { |t| t.uri_template = '<%= @platform_cpu_name %>' }
+      use_platform('arm64-darwin-21')
+
+      task = Rake::Task['dependency:download']
+
+      stub_external_calls(task)
+
+      task.invoke
+
+      expect(Down)
+        .to(have_received(:download)
+              .with('arm64'))
+    end
+
+    it 'passes the provided platform CPU name for x86_64 when present' do
+      define_task do |t|
+        t.platform_cpu_names = { x86_64: 'x86_64' }
+        t.uri_template = '<%= @platform_cpu_name %>'
+      end
+      use_platform('x86_64-darwin')
+
+      task = Rake::Task['dependency:download']
+
+      stub_external_calls(task)
+
+      task.invoke
+
+      expect(Down)
+        .to(have_received(:download)
+              .with('x86_64'))
+    end
+
+    it 'passes the provided platform CPU name for x64 when present' do
+      define_task do |t|
+        t.platform_cpu_names = { x64: 'x86_64' }
+        t.uri_template = '<%= @platform_cpu_name %>'
+      end
+      use_platform('x64-linux')
+
+      task = Rake::Task['dependency:download']
+
+      stub_external_calls(task)
+
+      task.invoke
+
+      expect(Down)
+        .to(have_received(:download)
+              .with('x86_64'))
+    end
+
+    it 'passes the provided platform CPU name for x86 when present' do
+      define_task do |t|
+        t.platform_cpu_names = { x86: 'x86' }
+        t.uri_template = '<%= @platform_cpu_name %>'
+      end
+      use_platform('x86-linux')
+
+      task = Rake::Task['dependency:download']
+
+      stub_external_calls(task)
+
+      task.invoke
+
+      expect(Down)
+        .to(have_received(:download)
+              .with('x86'))
+    end
+
+    it 'passes the provided platform CPU name for arm when present' do
+      define_task do |t|
+        t.platform_cpu_names = { arm: 'armv4' }
+        t.uri_template = '<%= @platform_cpu_name %>'
+      end
+      use_platform('arm-linux')
+
+      task = Rake::Task['dependency:download']
+
+      stub_external_calls(task)
+
+      task.invoke
+
+      expect(Down)
+        .to(have_received(:download)
+              .with('armv4'))
+    end
+
+    it 'passes the provided platform CPU name for arm64 when present' do
+      define_task do |t|
+        t.platform_cpu_names = { arm64: 'armv9' }
+        t.uri_template = '<%= @platform_cpu_name %>'
+      end
+      use_platform('arm64-darwin-21')
+
+      task = Rake::Task['dependency:download']
+
+      stub_external_calls(task)
+
+      task.invoke
+
+      expect(Down)
+        .to(have_received(:download)
+              .with('armv9'))
+    end
+
+    it 'passes the provided platform CPU name for another arch when present' do
+      define_task do |t|
+        t.platform_cpu_names = { powerpc: 'powerpc' }
+        t.uri_template = '<%= @platform_cpu_name %>'
+      end
+      use_platform('powerpc-linux')
+
+      task = Rake::Task['dependency:download']
+
+      stub_external_calls(task)
+
+      task.invoke
+
+      expect(Down)
+        .to(have_received(:download)
+              .with('powerpc'))
+    end
+
+    it 'passes a platform OS name of "darwin" on darwin by default' do
+      define_task { |t| t.uri_template = '<%= @platform_os_name %>' }
+      use_platform('arm64-darwin-21')
+
+      task = Rake::Task['dependency:download']
+
+      stub_external_calls(task)
+
+      task.invoke
+
+      expect(Down)
+        .to(have_received(:download)
+              .with('darwin'))
+    end
+
+    it 'passes a platform OS name of "linux" on linux by default' do
+      define_task { |t| t.uri_template = '<%= @platform_os_name %>' }
+      use_platform('x86_64-linux')
+
+      task = Rake::Task['dependency:download']
+
+      stub_external_calls(task)
+
+      task.invoke
+
+      expect(Down)
+        .to(have_received(:download)
+              .with('linux'))
+    end
+
+    it 'passes a platform OS name of "windows" on mswin32 by default' do
+      define_task { |t| t.uri_template = '<%= @platform_os_name %>' }
+      use_platform('x86-mswin32')
+
+      task = Rake::Task['dependency:download']
+
+      stub_external_calls(task)
+
+      task.invoke
+
+      expect(Down)
+        .to(have_received(:download)
+              .with('windows'))
+    end
+
+    it 'passes a platform OS name of "windows" on mswin64 by default' do
+      define_task { |t| t.uri_template = '<%= @platform_os_name %>' }
+      use_platform('x86_64-mswin64')
+
+      task = Rake::Task['dependency:download']
+
+      stub_external_calls(task)
+
+      task.invoke
+
+      expect(Down)
+        .to(have_received(:download)
+              .with('windows'))
+    end
+
+    it 'passes the provided platform OS name for darwin when present' do
+      define_task do |t|
+        t.platform_os_names = { darwin: 'mac', linux: 'linux64' }
+        t.uri_template = '<%= @platform_os_name %>'
+      end
+      use_platform('x86_64-darwin')
+
+      task = Rake::Task['dependency:download']
+
+      stub_external_calls(task)
+
+      task.invoke
+
+      expect(Down)
+        .to(have_received(:download)
+              .with('mac'))
+    end
+
+    it 'passes the provided platform OS name for linux when present' do
+      define_task do |t|
+        t.platform_os_names = { darwin: 'mac', linux: 'linux64' }
+        t.uri_template = '<%= @platform_os_name %>'
+      end
+      use_platform('x86_64-linux')
+
+      task = Rake::Task['dependency:download']
+
+      stub_external_calls(task)
+
+      task.invoke
+
+      expect(Down)
+        .to(have_received(:download)
+              .with('linux64'))
+    end
+
+    it 'passes the provided platform OS name for mswin32 when present' do
+      define_task do |t|
+        t.platform_os_names = { mswin32: 'mswin32' }
+        t.uri_template = '<%= @platform_os_name %>'
+      end
+      use_platform('i686-mswin32')
+
+      task = Rake::Task['dependency:download']
+
+      stub_external_calls(task)
+
+      task.invoke
+
+      expect(Down)
+        .to(have_received(:download)
+              .with('mswin32'))
+    end
+
+    it 'passes the provided platform OS name for mswin64 when present' do
+      define_task do |t|
+        t.platform_os_names = { mswin64: 'mswin64' }
+        t.uri_template = '<%= @platform_os_name %>'
+      end
+      use_platform('x64-mswin64')
+
+      task = Rake::Task['dependency:download']
+
+      stub_external_calls(task)
+
+      task.invoke
+
+      expect(Down)
+        .to(have_received(:download)
+              .with('mswin64'))
+    end
+
+    it 'passes the provided platform OS name for another OS when present' do
+      define_task do |t|
+        t.platform_os_names = { aix: 'aix' }
+        t.uri_template = '<%= @platform_os_name %>'
+      end
+      use_platform('x86-aix')
+
+      task = Rake::Task['dependency:download']
+
+      stub_external_calls(task)
+
+      task.invoke
+
+      expect(Down)
+        .to(have_received(:download)
+              .with('aix'))
+    end
+
+    it 'uses an extension of .zip when type is zip' do
+      define_task do |t|
+        t.type = :zip
+        t.uri_template = '<%= @ext %>'
+      end
+      use_default_platform
+
+      task = Rake::Task['dependency:download']
+
+      stub_external_calls(task)
+
+      task.invoke
+
+      expect(Down)
+        .to(have_received(:download)
+              .with('.zip'))
+    end
+
+    it 'uses an extension of .tgz when type is tgz' do
+      define_task do |t|
+        t.type = :tgz
+        t.uri_template = '<%= @ext %>'
+      end
+      use_default_platform
+
+      task = Rake::Task['dependency:download']
+
+      stub_external_calls(task)
+
+      task.invoke
+
+      expect(Down)
+        .to(have_received(:download)
+              .with('.tgz'))
+    end
+
+    it 'uses no extension when type is uncompressed' do
+      define_task do |t|
+        t.type = :uncompressed
+        t.uri_template = '<%= @ext %>'
+      end
+      use_default_platform
+
+      task = Rake::Task['dependency:download']
+
+      stub_external_calls(task)
+
+      task.invoke
+
+      expect(Down)
+        .to(have_received(:download)
+              .with(''))
+    end
+
+    it 'uses the provided platform specific extension when a map is passed ' \
+       'as the type' do
+      define_task do |t|
+        t.type = { darwin: :zip, linux: :tar_gz }
+        t.uri_template = '<%= @ext %>'
+      end
+      use_platform('x86_64-linux')
+
+      task = Rake::Task['dependency:download']
+
+      stub_external_calls(task)
+
+      task.invoke
+
+      expect(Down)
+        .to(have_received(:download)
+              .with('.tar.gz'))
+    end
+
+    it 'raises an error when an unknown type is supplied' do
+      define_task do |t|
+        t.type = :wat
+        t.uri_template = '<%= @ext %>'
+      end
+      use_default_platform
+
+      task = Rake::Task['dependency:download']
+
+      stub_external_calls(task)
+
+      expect do
+        task.invoke
+      end.to raise_error(RuntimeError, 'Unknown type: wat')
+    end
+  end
+
+  describe 'file path construction' do
+    it 'allows the distribution directory to be overridden' do
+      define_task { |t| t.distribution_directory = 'spinach' }
+      use_default_platform
+
+      task = Rake::Task['dependency:download']
+
+      stub_external_calls(task)
+
+      task.invoke
+
+      expect(task.creator)
+        .to(have_received(:mkdir_p)
+              .with('vendor/dependency/spinach'))
+    end
+  end
+
+  describe 'logging' do
+    it 'logs on starting download task' do
+      version = '7.8.9'
+      dependency = 'something'
+      logger = instance_double(Logger)
+
+      define_task(dependency: dependency, version: version, logger: logger)
+      use_default_platform
+
+      task = Rake::Task['dependency:download']
+
+      stub_external_calls(task)
+      stub_logger(logger)
+
+      task.invoke
+
+      expect(logger)
+        .to(have_received(:info)
+              .with("Downloading 'something' (version #{version})..."))
+    end
+
+    it 'logs resolved parameters' do
+      version = '7.8.9'
+      platform = 'arm64-darwin-21'
+      logger = instance_double(Logger)
+
+      define_task(
+        version: version,
+        type: :zip,
+        logger: logger
+      )
+      use_platform(platform)
+
+      task = Rake::Task['dependency:download']
+
+      stub_external_calls(task)
+      stub_logger(logger)
+
+      task.invoke
+
+      expected_parameters = {
+        version: version,
+        platform: platform,
+        platform_cpu_name: 'arm64',
+        platform_os_name: 'darwin',
+        ext: '.zip'
+      }
+
+      expect(logger)
+        .to(have_received(:debug)
+              .with("Using parameters: #{expected_parameters}."))
+    end
+
+    it 'logs resolved URI' do
+      version = '7.8.9'
+      platform = 'arm64-darwin-21'
+      logger = instance_double(Logger)
+
+      define_task(
+        version: version,
+        type: :zip,
+        logger: logger,
+        uri_template:
+          'https://example.com/<%= @version %>/super-cool-tool-' \
+          '<%= @platform_os_name %>-<%= @platform_cpu_name %><%= @ext %>'
+      )
+      use_platform(platform)
+
+      task = Rake::Task['dependency:download']
+
+      stub_external_calls(task)
+      stub_logger(logger)
+
+      task.invoke
+
+      expected_uri =
+        'https://example.com/7.8.9/super-cool-tool-darwin-arm64.zip'
+
+      expect(logger)
+        .to(have_received(:debug)
+              .with("Using URI: #{expected_uri}."))
+    end
+
+    it 'logs resolved distribution file path' do
+      platform = 'arm64-darwin-21'
+      logger = instance_double(Logger)
+
+      define_task(
+        type: :zip,
+        logger: logger,
+        path: 'vendor/super-cool-tool',
+        distribution_directory: 'dist',
+        file_name_template:
+          'super-cool-tool-<%= @platform_os_name %><%= @ext %>'
+      )
+      use_platform(platform)
+
+      task = Rake::Task['dependency:download']
+
+      stub_external_calls(task)
+      stub_logger(logger)
+
+      task.invoke
+
+      expected_distribution_file_path =
+        'vendor/super-cool-tool/dist/super-cool-tool-darwin.zip'
+
+      expect(logger)
+        .to(have_received(:debug)
+              .with('Using distribution file path: ' \
+                    "#{expected_distribution_file_path}."))
+    end
+
+    it 'logs on completing download task' do
+      logger = instance_double(Logger)
+
+      define_task(logger: logger)
+      use_default_platform
+
+      task = Rake::Task['dependency:download']
+
+      stub_external_calls(task)
+      stub_logger(logger)
+
+      task.invoke
+
+      expect(logger)
+        .to(have_received(:info)
+              .with('Downloaded.'))
+    end
   end
 
   def use_platform(string)
@@ -588,6 +730,11 @@ describe RakeDependencies::Tasks::Download do
     stub_download
     stub_make_directory(task)
     stub_copy(task)
+  end
+
+  def stub_logger(logger)
+    allow(logger).to(receive(:info))
+    allow(logger).to(receive(:debug))
   end
 
   def stub_download

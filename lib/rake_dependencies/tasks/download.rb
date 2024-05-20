@@ -6,6 +6,7 @@ require 'rubygems'
 
 require_relative '../template'
 require_relative '../platform_names'
+require_relative '../null_logger'
 
 module RakeDependencies
   module Tasks
@@ -28,7 +29,12 @@ module RakeDependencies
       parameter :uri_template, required: true
       parameter :file_name_template, required: true
 
+      parameter :logger, default: NullLogger.new
+
+      # rubocop:disable Metrics/BlockLength
       action do
+        logger.info("Downloading '#{dependency}' (version #{version})...")
+
         parameters = {
           version: version,
           platform: platform,
@@ -37,9 +43,16 @@ module RakeDependencies
           ext: ext
         }
 
+        logger.debug(
+          "Using parameters: #{parameters.merge({ platform: platform.to_s })}."
+        )
+
         uri = Template.new(uri_template)
                       .with_parameters(parameters)
                       .render
+
+        logger.debug("Using URI: #{uri}.")
+
         download_file_name = Template.new(file_name_template)
                                      .with_parameters(parameters)
                                      .render
@@ -47,11 +60,16 @@ module RakeDependencies
         download_file_path = File.join(download_file_directory,
                                        download_file_name)
 
+        logger.debug("Using distribution file path: #{download_file_path}.")
+
         temporary_file = Down.download(uri)
 
         mkdir_p download_file_directory
         cp temporary_file.path, download_file_path
+
+        logger.info('Downloaded.')
       end
+      # rubocop:enable Metrics/BlockLength
 
       private
 

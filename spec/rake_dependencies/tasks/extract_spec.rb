@@ -8,18 +8,24 @@ describe RakeDependencies::Tasks::Extract do
   # rubocop:disable Metrics/MethodLength
   def define_task(opts = {}, &block)
     namespace :dependency do
-      subject.define({ dependency: 'some-dep' }.merge(opts)) do |t|
-        t.type = :zip
-        t.path = 'vendor/dependency'
-        t.version = '1.2.3'
-        t.file_name_template =
+      opts = {
+        dependency: 'some-dep',
+        type: :zip,
+        path: 'vendor/dependency',
+        version: '1.2.3',
+        file_name_template:
           'some-dep-<%= @platform_os_name %>-<%= @platform_cpu_name %>' \
           '<%= @ext %>'
+      }.merge(opts)
+      subject.define(opts) do |t|
         block&.call(t)
       end
     end
   end
+
   # rubocop:enable Metrics/MethodLength
+
+  # throws if required parameters are not supplied
 
   describe 'task definition' do
     it 'adds an extract task in the namespace in which it is created' do
@@ -887,7 +893,217 @@ describe RakeDependencies::Tasks::Extract do
     # rubocop:enable RSpec/MultipleExpectations
   end
 
-  # throws if required parameters are not supplied
+  describe 'logging' do
+    it 'logs on starting extract task' do
+      dependency = 'some-cool-tool'
+      logger = instance_double(Logger)
+
+      define_task(dependency: dependency, type: :zip, logger: logger)
+      use_default_platform
+
+      extractor = instance_double(
+        RakeDependencies::Extractors::ZipExtractor,
+        extract: nil
+      )
+
+      allow(RakeDependencies::Extractors::ZipExtractor)
+        .to(receive(:new)
+              .and_return(extractor))
+
+      stub_logger(logger)
+
+      Rake::Task['dependency:extract'].invoke
+
+      expect(logger)
+        .to(have_received(:info)
+              .with("Extracting '#{dependency}'..."))
+    end
+
+    it 'logs resolved parameters' do
+      version = '1.2.3'
+      platform = 'arm64-darwin-21'
+      logger = instance_double(Logger)
+
+      define_task(
+        version: version,
+        type: :zip,
+        logger: logger
+      )
+      use_default_platform
+
+      extractor = instance_double(
+        RakeDependencies::Extractors::ZipExtractor,
+        extract: nil
+      )
+
+      allow(RakeDependencies::Extractors::ZipExtractor)
+        .to(receive(:new)
+              .and_return(extractor))
+
+      stub_logger(logger)
+
+      Rake::Task['dependency:extract'].invoke
+
+      expected_parameters = {
+        version: version,
+        platform: platform,
+        platform_cpu_name: 'arm64',
+        platform_os_name: 'darwin',
+        ext: '.zip'
+      }
+
+      expect(logger)
+        .to(have_received(:debug)
+              .with("Using parameters: #{expected_parameters}."))
+    end
+
+    it 'logs resolved distribution file path' do
+      path = 'vendor/some-dep'
+      distribution_directory = 'dist'
+      platform = 'arm64-darwin-21'
+      file_name_template =
+        'some-dep-<%= @platform_os_name %>-<%= @platform_cpu_name %>' \
+        '<%= @ext %>'
+      logger = instance_double(Logger)
+
+      define_task(
+        path: path,
+        distribution_directory: distribution_directory,
+        platform: platform,
+        type: :zip,
+        file_name_template: file_name_template,
+        logger: logger
+      )
+      use_default_platform
+
+      extractor = instance_double(
+        RakeDependencies::Extractors::ZipExtractor,
+        extract: nil
+      )
+
+      allow(RakeDependencies::Extractors::ZipExtractor)
+        .to(receive(:new)
+              .and_return(extractor))
+
+      stub_logger(logger)
+
+      Rake::Task['dependency:extract'].invoke
+
+      expected_distribution_file_path =
+        'vendor/some-dep/dist/some-dep-darwin-arm64.zip'
+
+      expect(logger)
+        .to(have_received(:debug)
+              .with('Using distribution file path: ' \
+                    "#{expected_distribution_file_path}."))
+    end
+
+    it 'logs resolved extraction path' do
+      path = 'vendor/some-dep'
+      binary_directory = 'bin'
+      logger = instance_double(Logger)
+
+      define_task(
+        path: path,
+        binary_directory: binary_directory,
+        logger: logger
+      )
+      use_default_platform
+
+      extractor = instance_double(
+        RakeDependencies::Extractors::ZipExtractor,
+        extract: nil
+      )
+
+      allow(RakeDependencies::Extractors::ZipExtractor)
+        .to(receive(:new)
+              .and_return(extractor))
+
+      stub_logger(logger)
+
+      Rake::Task['dependency:extract'].invoke
+
+      expected_extraction_path =
+        'vendor/some-dep/bin'
+
+      expect(logger)
+        .to(have_received(:debug)
+              .with('Using extraction path: ' \
+                    "#{expected_extraction_path}."))
+    end
+
+    it 'logs resolved extraction options' do
+      version = '7.8.9'
+      platform = 'arm64-darwin-21'
+      strip_path_template = 'strip/<%= @version %>-<%= @platform_os_name %>'
+      source_binary_name_template = 'binary.<%= @version %>'
+      target_binary_name_template = 'binary.<%= @platform_os_name %>'
+      logger = instance_double(Logger)
+
+      define_task(
+        version: version,
+        strip_path_template: strip_path_template,
+        source_binary_name_template: source_binary_name_template,
+        target_binary_name_template: target_binary_name_template,
+        logger: logger
+      )
+      use_platform(platform)
+
+      extractor = instance_double(
+        RakeDependencies::Extractors::ZipExtractor,
+        extract: nil
+      )
+
+      allow(RakeDependencies::Extractors::ZipExtractor)
+        .to(receive(:new)
+              .and_return(extractor))
+
+      stub_logger(logger)
+
+      Rake::Task['dependency:extract'].invoke
+
+      expected_extraction_options = {
+        strip_path: 'strip/7.8.9-darwin',
+        rename_from: 'binary.7.8.9',
+        rename_to: 'binary.darwin'
+      }
+
+      expect(logger)
+        .to(have_received(:debug)
+              .with('Using extraction options: ' \
+                    "#{expected_extraction_options}."))
+    end
+
+    it 'logs on completing extract task' do
+      dependency = 'some-cool-tool'
+      logger = instance_double(Logger)
+
+      define_task(dependency: dependency, type: :zip, logger: logger)
+      use_default_platform
+
+      extractor = instance_double(
+        RakeDependencies::Extractors::ZipExtractor,
+        extract: nil
+      )
+
+      allow(RakeDependencies::Extractors::ZipExtractor)
+        .to(receive(:new)
+              .and_return(extractor))
+
+      stub_logger(logger)
+
+      Rake::Task['dependency:extract'].invoke
+
+      expect(logger)
+        .to(have_received(:info)
+              .with('Extracted.'))
+    end
+  end
+
+  def stub_logger(logger)
+    allow(logger).to(receive(:info))
+    allow(logger).to(receive(:debug))
+  end
 
   def use_platform(string)
     allow(Gem::Platform)

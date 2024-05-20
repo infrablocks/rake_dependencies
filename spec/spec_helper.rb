@@ -6,8 +6,8 @@ SimpleCov.start
 require 'bundler/setup'
 
 require 'rake'
-require 'support/shared_contexts/rake'
 require 'support/matchers'
+require 'support/shared_contexts/rake'
 
 require 'rake_dependencies'
 

@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 require 'rake_factory'
+require 'logger'
+
+require_relative '../null_logger'
 
 module RakeDependencies
   module Tasks
@@ -13,8 +16,12 @@ module RakeDependencies
       parameter :dependency, required: true
       parameter :path, required: true
 
+      parameter :logger, default: NullLogger.new
+
       action do |t|
+        logger.info("Cleaning '#{dependency}' at path: '#{path}'...")
         rm_rf t.path
+        logger.info('Cleaned.')
       end
     end
   end

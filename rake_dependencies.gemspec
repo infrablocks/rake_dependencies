@@ -42,7 +42,6 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'rake_factory', '~> 0.23'
   spec.add_dependency 'rubyzip', '>= 1.3'
 
-  spec.add_development_dependency 'activesupport'
   spec.add_development_dependency 'bundler'
   spec.add_development_dependency 'fakefs'
   spec.add_development_dependency 'gem-release'

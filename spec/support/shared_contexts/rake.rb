@@ -1,9 +1,11 @@
 # frozen_string_literal: true
 
 require 'rake'
+
+# needed to prevent fakefs errors
+require 'pp' # rubocop:disable Lint/RedundantRequireStatement
+
 require 'fakefs/spec_helpers'
-require 'active_support'
-require 'active_support/core_ext/string/inflections'
 
 # rubocop:disable RSpec/ContextWording
 shared_context 'rake' do

@@ -43,6 +43,8 @@ module RakeDependencies
       parameter :fetch_task_name, default: :fetch
       parameter :ensure_task_name, default: :ensure
 
+      parameter :logger, default: NullLogger.new
+
       task(
         Tasks::Clean, {
           name: (RakeFactory::DynamicValue.new { |ts| ts.clean_task_name })

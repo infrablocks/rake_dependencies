@@ -6,9 +6,11 @@ require 'rubygems'
 
 require_relative '../template'
 require_relative '../extractors'
+require_relative '../null_logger'
 
 module RakeDependencies
   module Tasks
+    # rubocop:disable Metrics/ClassLength
     class Extract < RakeFactory::Task
       default_name :extract
       default_description(RakeFactory::DynamicValue.new do |t|
@@ -38,14 +40,27 @@ module RakeDependencies
       parameter :target_binary_name_template
       parameter :strip_path_template
 
+      parameter :logger, default: NullLogger.new
+
+      # rubocop:disable Metrics/BlockLength
       action do
+        logger.info("Extracting '#{dependency}'...")
+
+        logger.debug(
+          "Using parameters: #{parameters.merge(platform: platform.to_s)}."
+        )
+
         distribution_file_name = interpolate_file_name_template(parameters)
         distribution_file_directory = relative_to_path(distribution_directory)
         distribution_file_path = File.join(
           distribution_file_directory, distribution_file_name
         )
 
+        logger.debug("Using distribution file path: #{distribution_file_path}.")
+
         extraction_path = relative_to_path(binary_directory)
+
+        logger.debug("Using extraction path: #{extraction_path}.")
 
         options = {}
         if strip_path_template
@@ -59,13 +74,18 @@ module RakeDependencies
             interpolate_target_binary_name_template(parameters)
         end
 
+        logger.debug("Using extraction options: #{options}.")
+
         extractor = extractor_for_extension.new(
           distribution_file_path,
           extraction_path,
           options
         )
         extractor.extract
+
+        logger.info('Extracted.')
       end
+      # rubocop:enable Metrics/BlockLength
 
       def parameters
         {
@@ -134,5 +154,6 @@ module RakeDependencies
         end
       end
     end
+    # rubocop:enable Metrics/ClassLength
   end
 end

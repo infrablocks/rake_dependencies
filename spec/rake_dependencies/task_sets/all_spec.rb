@@ -2,6 +2,7 @@
 
 require 'spec_helper'
 require 'fileutils'
+require 'logger'
 
 describe RakeDependencies::TaskSets::All do
   include_context 'rake'
@@ -154,6 +155,25 @@ describe RakeDependencies::TaskSets::All do
 
       expect(clean_task.creator.path).to(eq(path))
     end
+
+    it 'uses a null logger by default' do
+      define_tasks
+
+      clean_task = Rake::Task['some_namespace:clean']
+
+      expect(clean_task.creator.logger).to(eq(RakeDependencies::NullLogger.new))
+    end
+
+    it 'uses provided logger when specified' do
+      logger = instance_double(Logger)
+
+      define_tasks(logger: logger)
+
+      clean_task = Rake::Task['some_namespace:clean']
+
+      expect(clean_task.creator.logger)
+        .to(eq(logger))
+    end
   end
 
   describe 'download task' do
@@ -303,6 +323,26 @@ describe RakeDependencies::TaskSets::All do
 
       expect(download_task.creator.type)
         .to(eq(:tar_gz))
+    end
+
+    it 'uses a null logger by default' do
+      define_tasks
+
+      download_task = Rake::Task['some_namespace:download']
+
+      expect(download_task.creator.logger)
+        .to(eq(RakeDependencies::NullLogger.new))
+    end
+
+    it 'uses provided logger when specified' do
+      logger = instance_double(Logger)
+
+      define_tasks(logger: logger)
+
+      download_task = Rake::Task['some_namespace:download']
+
+      expect(download_task.creator.logger)
+        .to(eq(logger))
     end
   end
 
@@ -494,6 +534,26 @@ describe RakeDependencies::TaskSets::All do
 
       expect(extract_task.creator.type)
         .to(eq(:tar_gz))
+    end
+
+    it 'uses a null logger by default' do
+      define_tasks
+
+      extract_task = Rake::Task['some_namespace:extract']
+
+      expect(extract_task.creator.logger)
+        .to(eq(RakeDependencies::NullLogger.new))
+    end
+
+    it 'uses provided logger when specified' do
+      logger = instance_double(Logger)
+
+      define_tasks(logger: logger)
+
+      extract_task = Rake::Task['some_namespace:extract']
+
+      expect(extract_task.creator.logger)
+        .to(eq(logger))
     end
   end
 
@@ -689,6 +749,31 @@ describe RakeDependencies::TaskSets::All do
 
       expect(install_task.creator.type)
         .to(eq(:tar_gz))
+    end
+
+    it 'uses a null logger by default' do
+      define_tasks(
+        installation_directory: 'some/important/directory'
+      )
+
+      install_task = Rake::Task['some_namespace:install']
+
+      expect(install_task.creator.logger)
+        .to(eq(RakeDependencies::NullLogger.new))
+    end
+
+    it 'uses provided logger when specified' do
+      logger = instance_double(Logger)
+
+      define_tasks(
+        logger: logger,
+        installation_directory: 'some/important/directory'
+      )
+
+      install_task = Rake::Task['some_namespace:install']
+
+      expect(install_task.creator.logger)
+        .to(eq(logger))
     end
   end
 
