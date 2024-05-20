@@ -186,6 +186,32 @@ describe RakeDependencies::Tasks::Install do
     # rubocop:enable RSpec/MultipleExpectations
 
     # rubocop:disable RSpec/MultipleExpectations
+    it 'passes a platform CPU name of "aarch64" for aarch64 by default' do
+      define_task do |t|
+        t.path = 'some/path'
+        t.binary_name_template = '<%= @platform_cpu_name %>'
+        t.installation_directory = 'somewhere/important'
+      end
+
+      use_platform('aarch64-linux')
+
+      task = Rake::Task['dependency:install']
+
+      allow(task.creator).to(receive(:mkdir_p))
+      allow(task.creator).to(receive(:cp))
+
+      task.invoke
+
+      expect(task.creator)
+        .to(have_received(:mkdir_p)
+              .with('somewhere/important'))
+      expect(task.creator)
+        .to(have_received(:cp)
+              .with('some/path/bin/aarch64', 'somewhere/important'))
+    end
+    # rubocop:enable RSpec/MultipleExpectations
+
+    # rubocop:disable RSpec/MultipleExpectations
     it 'passes the provided platform CPU name for x86_64 when present' do
       define_task do |t|
         t.path = 'some/path'
@@ -302,6 +328,33 @@ describe RakeDependencies::Tasks::Install do
       end
 
       use_platform('arm64-darwin-21')
+
+      task = Rake::Task['dependency:install']
+
+      allow(task.creator).to(receive(:mkdir_p))
+      allow(task.creator).to(receive(:cp))
+
+      task.invoke
+
+      expect(task.creator)
+        .to(have_received(:mkdir_p)
+              .with('somewhere/important'))
+      expect(task.creator)
+        .to(have_received(:cp)
+              .with('some/path/bin/armv9', 'somewhere/important'))
+    end
+    # rubocop:enable RSpec/MultipleExpectations
+
+    # rubocop:disable RSpec/MultipleExpectations
+    it 'passes the provided platform CPU name for aarch64 when present' do
+      define_task do |t|
+        t.path = 'some/path'
+        t.platform_cpu_names = { aarch64: 'armv9' }
+        t.binary_name_template = '<%= @platform_cpu_name %>'
+        t.installation_directory = 'somewhere/important'
+      end
+
+      use_platform('aarch64-linux')
 
       task = Rake::Task['dependency:install']
 

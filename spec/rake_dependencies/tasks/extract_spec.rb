@@ -178,6 +178,29 @@ describe RakeDependencies::Tasks::Extract do
               .with('some/path/dist/arm64', any_args))
     end
 
+    it 'passes a platform CPU name of "aarch64" for aarch64 by default' do
+      define_task do |t|
+        t.path = 'some/path'
+        t.distribution_directory = 'dist'
+        t.file_name_template = '<%= @platform_cpu_name %>'
+      end
+      use_platform('aarch64-linux')
+
+      extractor = instance_double(
+        RakeDependencies::Extractors::ZipExtractor,
+        extract: nil
+      )
+
+      allow(RakeDependencies::Extractors::ZipExtractor)
+        .to(receive(:new).and_return(extractor))
+
+      Rake::Task['dependency:extract'].invoke
+
+      expect(RakeDependencies::Extractors::ZipExtractor)
+        .to(have_received(:new)
+              .with('some/path/dist/aarch64', any_args))
+    end
+
     it 'passes the provided platform CPU name for x86_64 when present' do
       define_task do |t|
         t.path = 'some/path'
@@ -282,6 +305,30 @@ describe RakeDependencies::Tasks::Extract do
         t.file_name_template = '<%= @platform_cpu_name %>'
       end
       use_platform('arm64-darwin-21')
+
+      extractor = instance_double(
+        RakeDependencies::Extractors::ZipExtractor,
+        extract: nil
+      )
+
+      allow(RakeDependencies::Extractors::ZipExtractor)
+        .to(receive(:new).and_return(extractor))
+
+      Rake::Task['dependency:extract'].invoke
+
+      expect(RakeDependencies::Extractors::ZipExtractor)
+        .to(have_received(:new)
+              .with('some/path/dist/armv9', any_args))
+    end
+
+    it 'passes the provided platform CPU name for aarch64 when present' do
+      define_task do |t|
+        t.path = 'some/path'
+        t.distribution_directory = 'dist'
+        t.platform_cpu_names = { aarch64: 'armv9' }
+        t.file_name_template = '<%= @platform_cpu_name %>'
+      end
+      use_platform('aarch64-linux')
 
       extractor = instance_double(
         RakeDependencies::Extractors::ZipExtractor,

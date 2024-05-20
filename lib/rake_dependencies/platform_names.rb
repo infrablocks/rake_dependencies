@@ -7,7 +7,8 @@ module RakeDependencies
       x64: 'amd64',
       x86: '386',
       arm: 'arm',
-      arm64: 'arm64'
+      arm64: 'arm64',
+      aarch64: 'aarch64'
     }.freeze
     OS = {
       darwin: 'darwin',

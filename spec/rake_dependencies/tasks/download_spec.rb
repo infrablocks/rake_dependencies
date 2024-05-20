@@ -219,6 +219,21 @@ describe RakeDependencies::Tasks::Download do
               .with('arm64'))
     end
 
+    it 'passes a platform CPU name of "aarch64" for aarch64 by default' do
+      define_task { |t| t.uri_template = '<%= @platform_cpu_name %>' }
+      use_platform('aarch64-linux')
+
+      task = Rake::Task['dependency:download']
+
+      stub_external_calls(task)
+
+      task.invoke
+
+      expect(Down)
+        .to(have_received(:download)
+              .with('aarch64'))
+    end
+
     it 'passes the provided platform CPU name for x86_64 when present' do
       define_task do |t|
         t.platform_cpu_names = { x86_64: 'x86_64' }
@@ -297,6 +312,24 @@ describe RakeDependencies::Tasks::Download do
         t.uri_template = '<%= @platform_cpu_name %>'
       end
       use_platform('arm64-darwin-21')
+
+      task = Rake::Task['dependency:download']
+
+      stub_external_calls(task)
+
+      task.invoke
+
+      expect(Down)
+        .to(have_received(:download)
+              .with('armv9'))
+    end
+
+    it 'passes the provided platform CPU name for aarch64 when present' do
+      define_task do |t|
+        t.platform_cpu_names = { aarch64: 'armv9' }
+        t.uri_template = '<%= @platform_cpu_name %>'
+      end
+      use_platform('aarch64-linux')
 
       task = Rake::Task['dependency:download']
 
