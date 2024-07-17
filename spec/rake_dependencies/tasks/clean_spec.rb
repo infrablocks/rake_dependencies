@@ -120,9 +120,9 @@ describe RakeDependencies::Tasks::Clean do
       logger = instance_double(Logger)
 
       described_class.define(
-        path: path,
+        path:,
         dependency: 'something',
-        logger: logger
+        logger:
       )
 
       task = Rake::Task['clean']

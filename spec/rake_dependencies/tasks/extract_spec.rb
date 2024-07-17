@@ -945,7 +945,7 @@ describe RakeDependencies::Tasks::Extract do
       dependency = 'some-cool-tool'
       logger = instance_double(Logger)
 
-      define_task(dependency: dependency, type: :zip, logger: logger)
+      define_task(dependency:, type: :zip, logger:)
       use_default_platform
 
       extractor = instance_double(
@@ -972,9 +972,9 @@ describe RakeDependencies::Tasks::Extract do
       logger = instance_double(Logger)
 
       define_task(
-        version: version,
+        version:,
         type: :zip,
-        logger: logger
+        logger:
       )
       use_default_platform
 
@@ -992,8 +992,8 @@ describe RakeDependencies::Tasks::Extract do
       Rake::Task['dependency:extract'].invoke
 
       expected_parameters = {
-        version: version,
-        platform: platform,
+        version:,
+        platform:,
         platform_cpu_name: 'arm64',
         platform_os_name: 'darwin',
         ext: '.zip'
@@ -1014,12 +1014,12 @@ describe RakeDependencies::Tasks::Extract do
       logger = instance_double(Logger)
 
       define_task(
-        path: path,
-        distribution_directory: distribution_directory,
-        platform: platform,
+        path:,
+        distribution_directory:,
+        platform:,
         type: :zip,
-        file_name_template: file_name_template,
-        logger: logger
+        file_name_template:,
+        logger:
       )
       use_default_platform
 
@@ -1051,9 +1051,9 @@ describe RakeDependencies::Tasks::Extract do
       logger = instance_double(Logger)
 
       define_task(
-        path: path,
-        binary_directory: binary_directory,
-        logger: logger
+        path:,
+        binary_directory:,
+        logger:
       )
       use_default_platform
 
@@ -1088,11 +1088,11 @@ describe RakeDependencies::Tasks::Extract do
       logger = instance_double(Logger)
 
       define_task(
-        version: version,
-        strip_path_template: strip_path_template,
-        source_binary_name_template: source_binary_name_template,
-        target_binary_name_template: target_binary_name_template,
-        logger: logger
+        version:,
+        strip_path_template:,
+        source_binary_name_template:,
+        target_binary_name_template:,
+        logger:
       )
       use_platform(platform)
 
@@ -1125,7 +1125,7 @@ describe RakeDependencies::Tasks::Extract do
       dependency = 'some-cool-tool'
       logger = instance_double(Logger)
 
-      define_task(dependency: dependency, type: :zip, logger: logger)
+      define_task(dependency:, type: :zip, logger:)
       use_default_platform
 
       extractor = instance_double(

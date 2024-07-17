@@ -782,7 +782,7 @@ describe RakeDependencies::Tasks::Install do
       dependency = 'dependency'
       logger = instance_double(Logger)
 
-      define_task(logger: logger, dependency: dependency)
+      define_task(logger:, dependency:)
       use_platform('x86_64-darwin')
 
       task = Rake::Task['dependency:install']
@@ -805,8 +805,8 @@ describe RakeDependencies::Tasks::Install do
       logger = instance_double(Logger)
 
       define_task(
-        logger: logger,
-        version: version,
+        logger:,
+        version:,
         type: :zip
       )
       use_platform(platform)
@@ -821,8 +821,8 @@ describe RakeDependencies::Tasks::Install do
       task.invoke
 
       expected_parameters = {
-        version: version,
-        platform: platform,
+        version:,
+        platform:,
         platform_cpu_name: 'arm64',
         platform_os_name: 'darwin',
         ext: '.zip'
@@ -841,10 +841,10 @@ describe RakeDependencies::Tasks::Install do
       logger = instance_double(Logger)
 
       define_task(
-        version: version,
-        path: path,
-        binary_name_template: binary_name_template,
-        logger: logger
+        version:,
+        path:,
+        binary_name_template:,
+        logger:
       )
       use_platform(platform)
 
@@ -870,8 +870,8 @@ describe RakeDependencies::Tasks::Install do
       logger = instance_double(Logger)
 
       define_task(
-        installation_directory: installation_directory,
-        logger: logger
+        installation_directory:,
+        logger:
       )
       use_default_platform
 
@@ -894,7 +894,7 @@ describe RakeDependencies::Tasks::Install do
       dependency = 'dependency'
       logger = instance_double(Logger)
 
-      define_task(logger: logger, dependency: dependency)
+      define_task(logger:, dependency:)
       use_platform('x86_64-darwin')
 
       task = Rake::Task['dependency:install']

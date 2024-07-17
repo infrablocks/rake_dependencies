@@ -9,8 +9,8 @@ require 'rake_dependencies/version'
 
 module RakeDependencies
   class << self
-    def define_tasks(&block)
-      TaskSets::All.define(&block)
+    def define_tasks(&)
+      TaskSets::All.define(&)
     end
   end
 end

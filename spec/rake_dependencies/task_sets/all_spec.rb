@@ -21,7 +21,7 @@ describe RakeDependencies::TaskSets::All do
         '-<%= @platform_cpu_name %><%= @ext %>',
       file_name_template:
         'super-cool-tool-<%= @platform_os_name %><%= @ext %>',
-      needs_fetch: needs_fetch
+      needs_fetch:
     }
     resolved_opts = default_opts.merge(opts)
 
@@ -133,8 +133,8 @@ describe RakeDependencies::TaskSets::All do
       path = 'in/this/path'
 
       define_tasks(
-        dependency: dependency,
-        path: path
+        dependency:,
+        path:
       )
 
       clean_task = Rake::Task['some_namespace:clean']
@@ -147,8 +147,8 @@ describe RakeDependencies::TaskSets::All do
       path = 'in/this/path'
 
       define_tasks(
-        dependency: dependency,
-        path: path
+        dependency:,
+        path:
       )
 
       clean_task = Rake::Task['some_namespace:clean']
@@ -167,7 +167,7 @@ describe RakeDependencies::TaskSets::All do
     it 'uses provided logger when specified' do
       logger = instance_double(Logger)
 
-      define_tasks(logger: logger)
+      define_tasks(logger:)
 
       clean_task = Rake::Task['some_namespace:clean']
 
@@ -195,7 +195,7 @@ describe RakeDependencies::TaskSets::All do
       dependency = 'some-dependency'
 
       define_tasks(
-        dependency: dependency
+        dependency:
       )
 
       download_task = Rake::Task['some_namespace:download']
@@ -207,7 +207,7 @@ describe RakeDependencies::TaskSets::All do
       path = 'in/this/path'
 
       define_tasks(
-        path: path
+        path:
       )
 
       download_task = Rake::Task['some_namespace:download']
@@ -219,7 +219,7 @@ describe RakeDependencies::TaskSets::All do
       version = '1.2.3'
 
       define_tasks(
-        version: version
+        version:
       )
 
       download_task = Rake::Task['some_namespace:download']
@@ -231,7 +231,7 @@ describe RakeDependencies::TaskSets::All do
       uri_template = 'https://example.com/<%= @version %>'
 
       define_tasks(
-        uri_template: uri_template
+        uri_template:
       )
 
       download_task = Rake::Task['some_namespace:download']
@@ -244,7 +244,7 @@ describe RakeDependencies::TaskSets::All do
       file_name_template = '<%= @version %>'
 
       define_tasks(
-        file_name_template: file_name_template
+        file_name_template:
       )
 
       download_task = Rake::Task['some_namespace:download']
@@ -337,7 +337,7 @@ describe RakeDependencies::TaskSets::All do
     it 'uses provided logger when specified' do
       logger = instance_double(Logger)
 
-      define_tasks(logger: logger)
+      define_tasks(logger:)
 
       download_task = Rake::Task['some_namespace:download']
 
@@ -365,7 +365,7 @@ describe RakeDependencies::TaskSets::All do
       dependency = 'some-dependency'
 
       define_tasks(
-        dependency: dependency
+        dependency:
       )
 
       extract_task = Rake::Task['some_namespace:extract']
@@ -377,7 +377,7 @@ describe RakeDependencies::TaskSets::All do
       path = 'in/this/path'
 
       define_tasks(
-        path: path
+        path:
       )
 
       extract_task = Rake::Task['some_namespace:extract']
@@ -389,7 +389,7 @@ describe RakeDependencies::TaskSets::All do
       version = '1.2.3'
 
       define_tasks(
-        version: version
+        version:
       )
 
       extract_task = Rake::Task['some_namespace:extract']
@@ -401,7 +401,7 @@ describe RakeDependencies::TaskSets::All do
       file_name_template = '<%= @version %>'
 
       define_tasks(
-        file_name_template: file_name_template
+        file_name_template:
       )
 
       extract_task = Rake::Task['some_namespace:extract']
@@ -548,7 +548,7 @@ describe RakeDependencies::TaskSets::All do
     it 'uses provided logger when specified' do
       logger = instance_double(Logger)
 
-      define_tasks(logger: logger)
+      define_tasks(logger:)
 
       extract_task = Rake::Task['some_namespace:extract']
 
@@ -580,7 +580,7 @@ describe RakeDependencies::TaskSets::All do
 
       define_tasks(
         installation_directory: 'some/important/directory',
-        dependency: dependency
+        dependency:
       )
 
       install_task = Rake::Task['some_namespace:install']
@@ -593,7 +593,7 @@ describe RakeDependencies::TaskSets::All do
 
       define_tasks(
         installation_directory: 'some/important/directory',
-        path: path
+        path:
       )
 
       install_task = Rake::Task['some_namespace:install']
@@ -606,7 +606,7 @@ describe RakeDependencies::TaskSets::All do
 
       define_tasks(
         installation_directory: 'some/important/directory',
-        version: version
+        version:
       )
 
       install_task = Rake::Task['some_namespace:install']
@@ -618,7 +618,7 @@ describe RakeDependencies::TaskSets::All do
       installation_directory = 'some/important/directory'
 
       define_tasks(
-        installation_directory: installation_directory
+        installation_directory:
       )
 
       install_task = Rake::Task['some_namespace:install']
@@ -632,7 +632,7 @@ describe RakeDependencies::TaskSets::All do
 
       define_tasks(
         installation_directory: 'some/important/directory',
-        target_binary_name_template: target_binary_name_template
+        target_binary_name_template:
       )
 
       install_task = Rake::Task['some_namespace:install']
@@ -766,7 +766,7 @@ describe RakeDependencies::TaskSets::All do
       logger = instance_double(Logger)
 
       define_tasks(
-        logger: logger,
+        logger:,
         installation_directory: 'some/important/directory'
       )
 
@@ -795,7 +795,7 @@ describe RakeDependencies::TaskSets::All do
     it 'configures with the provided dependency' do
       dependency = 'some-dependency'
 
-      define_tasks(dependency: dependency)
+      define_tasks(dependency:)
 
       fetch_task = Rake::Task['some_namespace:fetch']
 
@@ -860,7 +860,7 @@ describe RakeDependencies::TaskSets::All do
       dependency = 'some-dependency'
 
       define_tasks(
-        dependency: dependency
+        dependency:
       )
 
       ensure_task = Rake::Task['some_namespace:ensure']
@@ -872,7 +872,7 @@ describe RakeDependencies::TaskSets::All do
       version = '1.2.3'
 
       define_tasks(
-        version: version
+        version:
       )
 
       ensure_task = Rake::Task['some_namespace:ensure']
@@ -884,7 +884,7 @@ describe RakeDependencies::TaskSets::All do
       path = 'in/this/path'
 
       define_tasks(
-        path: path
+        path:
       )
 
       ensure_task = Rake::Task['some_namespace:ensure']
@@ -896,7 +896,7 @@ describe RakeDependencies::TaskSets::All do
       needs_fetch = ->(_) { true }
 
       define_tasks(
-        needs_fetch: needs_fetch
+        needs_fetch:
       )
 
       ensure_task = Rake::Task['some_namespace:ensure']

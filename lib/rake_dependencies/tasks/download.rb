@@ -36,11 +36,11 @@ module RakeDependencies
         logger.info("Downloading '#{dependency}' (version #{version})...")
 
         parameters = {
-          version: version,
-          platform: platform,
-          platform_cpu_name: platform_cpu_name,
-          platform_os_name: platform_os_name,
-          ext: ext
+          version:,
+          platform:,
+          platform_cpu_name:,
+          platform_os_name:,
+          ext:
         }
 
         logger.debug(

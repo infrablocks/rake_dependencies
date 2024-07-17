@@ -623,7 +623,7 @@ describe RakeDependencies::Tasks::Download do
       dependency = 'something'
       logger = instance_double(Logger)
 
-      define_task(dependency: dependency, version: version, logger: logger)
+      define_task(dependency:, version:, logger:)
       use_default_platform
 
       task = Rake::Task['dependency:download']
@@ -644,9 +644,9 @@ describe RakeDependencies::Tasks::Download do
       logger = instance_double(Logger)
 
       define_task(
-        version: version,
+        version:,
         type: :zip,
-        logger: logger
+        logger:
       )
       use_platform(platform)
 
@@ -658,8 +658,8 @@ describe RakeDependencies::Tasks::Download do
       task.invoke
 
       expected_parameters = {
-        version: version,
-        platform: platform,
+        version:,
+        platform:,
         platform_cpu_name: 'arm64',
         platform_os_name: 'darwin',
         ext: '.zip'
@@ -676,9 +676,9 @@ describe RakeDependencies::Tasks::Download do
       logger = instance_double(Logger)
 
       define_task(
-        version: version,
+        version:,
         type: :zip,
-        logger: logger,
+        logger:,
         uri_template:
           'https://example.com/<%= @version %>/super-cool-tool-' \
           '<%= @platform_os_name %>-<%= @platform_cpu_name %><%= @ext %>'
@@ -706,7 +706,7 @@ describe RakeDependencies::Tasks::Download do
 
       define_task(
         type: :zip,
-        logger: logger,
+        logger:,
         path: 'vendor/super-cool-tool',
         distribution_directory: 'dist',
         file_name_template:
@@ -733,7 +733,7 @@ describe RakeDependencies::Tasks::Download do
     it 'logs on completing download task' do
       logger = instance_double(Logger)
 
-      define_task(logger: logger)
+      define_task(logger:)
       use_default_platform
 
       task = Rake::Task['dependency:download']

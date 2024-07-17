@@ -33,11 +33,11 @@ module RakeDependencies
         logger.info("Installing '#{dependency}'...")
 
         parameters = {
-          version: version,
-          platform: platform,
-          platform_cpu_name: platform_cpu_name,
-          platform_os_name: platform_os_name,
-          ext: ext
+          version:,
+          platform:,
+          platform_cpu_name:,
+          platform_os_name:,
+          ext:
         }
 
         logger.debug(
