@@ -38,7 +38,7 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency 'down', '~> 5.3'
   spec.add_dependency 'hamster', '~> 3.0'
-  spec.add_dependency 'minitar', '~> 0.9'
+  spec.add_dependency 'minitar', '>= 0.9', '< 2.0'
   spec.add_dependency 'rake_factory', '~> 0.33'
   spec.add_dependency 'rubyzip', '>= 1.3'
 
