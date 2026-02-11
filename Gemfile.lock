@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    rake_dependencies (3.10.0.pre.4)
+    rake_dependencies (3.11.0)
       down (~> 5.3)
       hamster (~> 3.0)
       minitar (>= 1.0, < 2.0)
