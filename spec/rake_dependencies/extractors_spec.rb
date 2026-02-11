@@ -48,7 +48,11 @@ describe RakeDependencies::Extractors do
 
       expect(Zip::File)
         .to(have_received(:open)
-              .with(zip_file_path, create: anything, restore_permissions: anything))
+              .with(
+                zip_file_path,
+                create: anything,
+                restore_permissions: anything
+              ))
     end
 
     it 'does not create the zip file if missing on open' do
