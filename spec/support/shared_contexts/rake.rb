@@ -3,7 +3,7 @@
 require 'rake'
 
 # needed to prevent fakefs errors
-require 'pp' # rubocop:disable Lint/RedundantRequireStatement
+require 'pp'
 
 require 'fakefs/spec_helpers'
 

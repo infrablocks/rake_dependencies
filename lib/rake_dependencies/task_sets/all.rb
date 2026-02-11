@@ -47,33 +47,33 @@ module RakeDependencies
 
       task(
         Tasks::Clean, {
-          name: (RakeFactory::DynamicValue.new { |ts| ts.clean_task_name })
+          name: RakeFactory::DynamicValue.new { |ts| ts.clean_task_name }
         }
       )
       task(
         Tasks::Download, {
-          name: (RakeFactory::DynamicValue.new { |ts| ts.download_task_name })
+          name: RakeFactory::DynamicValue.new { |ts| ts.download_task_name }
         }
       )
       task(
         Tasks::Extract, {
-          name: (RakeFactory::DynamicValue.new { |ts| ts.extract_task_name })
+          name: RakeFactory::DynamicValue.new { |ts| ts.extract_task_name }
         }
       )
       task(
         Tasks::Fetch, {
-          name: (RakeFactory::DynamicValue.new { |ts| ts.fetch_task_name })
+          name: RakeFactory::DynamicValue.new { |ts| ts.fetch_task_name }
         }
       )
       task(
         Tasks::Ensure, {
-          name: (RakeFactory::DynamicValue.new { |ts| ts.ensure_task_name })
+          name: RakeFactory::DynamicValue.new { |ts| ts.ensure_task_name }
         }
       )
       task(
         Tasks::Install, {
           name:
-            (RakeFactory::DynamicValue.new { |ts| ts.install_task_name }),
+            RakeFactory::DynamicValue.new { |ts| ts.install_task_name },
           binary_name_template:
             (RakeFactory::DynamicValue.new do |ts|
               ts.target_binary_name_template || ts.dependency
