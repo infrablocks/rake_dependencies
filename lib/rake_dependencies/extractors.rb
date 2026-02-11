@@ -3,7 +3,7 @@
 require 'zip'
 require 'zlib'
 require 'pathname'
-require 'archive/tar/minitar'
+require 'minitar'
 
 module RakeDependencies
   module Extractors
@@ -32,7 +32,7 @@ module RakeDependencies
 
       def extract_files
         Zip::File.open(
-          file_path, false, restore_permissions: true
+          file_path, create: false, restore_permissions: true
         ) do |zip_file_entries|
           zip_file_entries.each do |entry|
             process_zip_file_entry(zip_file_entries, entry)
@@ -127,7 +127,7 @@ module RakeDependencies
 
       def extract_files
         Zlib::GzipReader.open(file_path) do |tar_file|
-          Archive::Tar::Minitar.open(tar_file) do |tar_file_entries|
+          Minitar.open(tar_file) do |tar_file_entries|
             tar_file_entries.each(&method(:process_tar_file_entry))
           end
         end

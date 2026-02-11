@@ -3,7 +3,7 @@
 require 'spec_helper'
 require 'zip'
 require 'zlib'
-require 'archive/tar/minitar'
+require 'minitar'
 require 'fileutils'
 require 'fakefs/spec_helpers'
 
@@ -48,7 +48,11 @@ describe RakeDependencies::Extractors do
 
       expect(Zip::File)
         .to(have_received(:open)
-              .with(zip_file_path, anything, anything))
+              .with(
+                zip_file_path,
+                create: anything,
+                restore_permissions: anything
+              ))
     end
 
     it 'does not create the zip file if missing on open' do
@@ -66,7 +70,7 @@ describe RakeDependencies::Extractors do
 
       expect(Zip::File)
         .to(have_received(:open)
-              .with(anything, false, anything))
+              .with(anything, create: false, restore_permissions: anything))
     end
 
     it 'configures restoring permissions when extracting on open' do
@@ -85,8 +89,7 @@ describe RakeDependencies::Extractors do
       expect(Zip::File)
         .to(have_received(:open)
               .with(anything,
-                    anything,
-                    hash_including(restore_permissions: true)))
+                    create: anything, restore_permissions: true))
     end
 
     # rubocop:disable RSpec/MultipleExpectations
@@ -352,11 +355,11 @@ describe RakeDependencies::Extractors do
 
       extractor = TarGzExtractor.new(tgz_file_path, extract_path)
 
-      allow(Archive::Tar::Minitar).to(receive(:open))
+      allow(Minitar).to(receive(:open))
 
       extractor.extract
 
-      expect(Archive::Tar::Minitar)
+      expect(Minitar)
         .to(have_received(:open)
               .with(tar_file))
     end
@@ -602,7 +605,7 @@ describe RakeDependencies::Extractors do
       options = { file: true, mode: 644, contents: 'Content' }.merge(options)
 
       instance_double(
-        Archive::Tar::Minitar::Reader::EntryStream,
+        Minitar::Reader::EntryStream,
         name: entry_path,
         file?: options[:file],
         mode: options[:mode],
@@ -615,10 +618,10 @@ describe RakeDependencies::Extractors do
     end
 
     def stub_tar_file_open_for(*entries)
-      tar_file_entries = instance_double(Archive::Tar::Minitar::Input)
+      tar_file_entries = instance_double(Minitar::Input)
 
       stub_archive_file_each(entries, tar_file_entries)
-      allow(Archive::Tar::Minitar)
+      allow(Minitar)
         .to(receive(:open)
               .and_yield(tar_file_entries))
 
