@@ -49,7 +49,11 @@ module RakeDependencies
       def extract_file_if_needed(zip_file_entries, entry, target_path)
         return if File.exist?(target_path)
 
-        zip_file_entries.extract(entry, target_path)
+        zip_file_entries.extract(
+          entry,
+          target_pathname(entry).to_s,
+          destination_directory: extract_path
+        )
       end
 
       def requires_rename?

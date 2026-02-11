@@ -140,13 +140,16 @@ describe RakeDependencies::Extractors do
 
       expect(zip_file)
         .to(have_received(:extract)
-              .with(entry1, File.join(extract_path, entry1.name)))
+              .with(entry1, entry1.name,
+                    destination_directory: extract_path))
       expect(zip_file)
         .to(have_received(:extract)
-              .with(entry2, File.join(extract_path, entry2.name)))
+              .with(entry2, entry2.name,
+                    destination_directory: extract_path))
       expect(zip_file)
         .to(have_received(:extract)
-              .with(entry3, File.join(extract_path, entry3.name)))
+              .with(entry3, entry3.name,
+                    destination_directory: extract_path))
     end
     # rubocop:enable RSpec/MultipleExpectations
 
@@ -172,8 +175,8 @@ describe RakeDependencies::Extractors do
 
       expect(zip_file)
         .not_to(have_received(:extract)
-                  .with(existing_entry,
-                        File.join(extract_path, existing_entry.name)))
+                  .with(existing_entry, existing_entry.name,
+                        destination_directory: extract_path))
     end
 
     # rubocop:disable RSpec/MultipleExpectations
@@ -235,13 +238,16 @@ describe RakeDependencies::Extractors do
 
       expect(zip_file)
         .to(have_received(:extract)
-              .with(entry1, File.join(extract_path, 'containing1/file1')))
+              .with(entry1, 'containing1/file1',
+                    destination_directory: extract_path))
       expect(zip_file)
         .to(have_received(:extract)
-              .with(entry2, File.join(extract_path, 'containing2/file2')))
+              .with(entry2, 'containing2/file2',
+                    destination_directory: extract_path))
       expect(zip_file)
         .to(have_received(:extract)
-              .with(entry3, File.join(extract_path, 'file3')))
+              .with(entry3, 'file3',
+                    destination_directory: extract_path))
     end
     # rubocop:enable RSpec/MultipleExpectations
 
